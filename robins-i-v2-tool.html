@@ -256,6 +256,44 @@ const OPTS = {
   judgement:['','Low','Moderate','Serious','Critical'],
 };
 
+function initHistory() {
+  const state = history.state;
+  if (!state || state.app !== 'robins-i') {
+    history.replaceState({app:'robins-i', mode:'home', stage:0}, '', location.href);
+  } else if (state.mode && state.mode !== 'home') {
+    MODE = state.mode;
+    STAGES = MODE === 'study' ? STUDY_STAGES : DOMAIN_STAGES;
+    currentStage = typeof state.stage === 'number' ? state.stage : 0;
+    showApp({pushHistory:false});
+  }
+  window.addEventListener('popstate', handlePopState);
+}
+
+function setAppHistoryState(mode, stage, replace=false) {
+  const state = {app:'robins-i', mode, stage};
+  if (replace) history.replaceState(state, '', location.href);
+  else history.pushState(state, '', location.href);
+}
+
+function handlePopState(event) {
+  const state = event.state;
+  if (!state || state.app !== 'robins-i') return;
+  if (state.mode === 'home') {
+    document.getElementById('modeScreen').style.display = 'flex';
+    document.getElementById('appShell').style.display = 'none';
+    MODE = '';
+    STAGES = [];
+    currentStage = 0;
+    return;
+  }
+  MODE = state.mode;
+  STAGES = MODE === 'study' ? STUDY_STAGES : DOMAIN_STAGES;
+  currentStage = typeof state.stage === 'number' ? state.stage : 0;
+  showApp({pushHistory:false});
+}
+
+initHistory();
+
 const STUDY_STAGES = [
   {id:'setup',label:'Setup',section:'Getting Started'},
   {id:'prelim-c',label:'C: Target Trial',section:'Preliminary (Study-Level)'},
@@ -286,15 +324,15 @@ function startStudySession() {
   MODE = 'study'; STATE.mode = 'study';
   STAGES = STUDY_STAGES;
   currentStage = 0;
-  showApp();
+  showApp({pushHistory:true});
 }
 function startDomainSession() {
   MODE = 'domain'; STATE.mode = 'domain';
   STAGES = DOMAIN_STAGES;
   currentStage = 0;
-  showApp();
+  showApp({pushHistory:true});
 }
-function showApp() {
+function showApp({pushHistory=true}={}) {
   document.getElementById('modeScreen').style.display = 'none';
   document.getElementById('appShell').style.display = 'flex';
   const tag = document.getElementById('sessionTag');
@@ -304,8 +342,13 @@ function showApp() {
 }
 function backToModeSelect() {
   if (!confirm('Go back to start? Unsaved changes will be lost.')) return;
+  STATE.mode = '';
+  MODE = '';
+  STAGES = [];
+  currentStage = 0;
   document.getElementById('modeScreen').style.display = 'flex';
   document.getElementById('appShell').style.display = 'none';
+  setAppHistoryState('home', 0, true);
 }
 
 // ================================================================
@@ -380,7 +423,7 @@ function getFinalOverall() {
 // ================================================================
 // NAV
 // ================================================================
-function goToStage(idx) { saveCurrentStageData(); currentStage=idx; renderStage(); updateSidebar(); window.scrollTo(0,0); }
+function goToStage(idx) { saveCurrentStageData(); currentStage = idx; renderStage(); updateSidebar(); setAppHistoryState(MODE, currentStage); window.scrollTo(0,0); }
 function nextStage() {
   saveCurrentStageData();
   // Triage check in study session
@@ -392,9 +435,24 @@ function nextStage() {
       showToast(critCount + ' outcome(s) triaged as Critical. Remaining outcomes proceed.');
     }
   }
-  if (currentStage < STAGES.length-1) { currentStage++; renderStage(); updateSidebar(); window.scrollTo(0,0); }
+  if (currentStage < STAGES.length-1) {
+    currentStage++;
+    renderStage();
+    updateSidebar();
+    setAppHistoryState(MODE, currentStage);
+    window.scrollTo(0,0);
+  }
 }
-function prevStage() { saveCurrentStageData(); if (currentStage>0) { currentStage--; renderStage(); updateSidebar(); window.scrollTo(0,0); } }
+function prevStage() {
+  saveCurrentStageData();
+  if (currentStage > 0) {
+    currentStage--;
+    renderStage();
+    updateSidebar();
+    setAppHistoryState(MODE, currentStage);
+    window.scrollTo(0,0);
+  }
+}
 
 // ================================================================
 // RENDER
