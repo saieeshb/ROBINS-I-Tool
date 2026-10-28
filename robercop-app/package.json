@@ -1,0 +1,32 @@
+{
+  "name": "robercop-app",
+  "version": "0.1.0",
+  "private": true,
+  "description": "ROBer COP: local, human-led ROBINS-I V2 risk-of-bias assessment workspace",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=22.13"
+  },
+  "workspaces": [
+    "packages/rules",
+    "packages/shared",
+    "apps/server",
+    "apps/web"
+  ],
+  "scripts": {
+    "start": "node launcher/robercop.mjs",
+    "build": "npm run build -w @robercop/web && npm run build -w @robercop/server",
+    "dev:server": "npm run dev -w @robercop/server",
+    "dev:web": "npm run dev -w @robercop/web",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "typecheck": "tsc -p packages/rules && tsc -p packages/shared && tsc -p apps/server && tsc -p apps/web"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.0",
+    "@vitest/coverage-v8": "3.2.7",
+    "typescript": "5.9.3",
+    "vitest": "3.2.7"
+  }
+}
