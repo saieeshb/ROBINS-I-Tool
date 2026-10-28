@@ -1,0 +1,73 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [6 0 R 8 0 R] /Count 2 >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>
+endobj
+4 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>
+endobj
+5 0 obj
+<< /Length 1760 >>
+stream
+BT /F2 16 Tf 1 0 0 1 60 740 Tm (Robotic-assisted versus conventional minimally invasive) Tj ET
+BT /F2 16 Tf 1 0 0 1 60 720 Tm (esophagectomy: a propensity-matched cohort study) Tj ET
+BT /F1 10 Tf 1 0 0 1 60 700 Tm (A. Example, B. Sample, C. Placeholder \(fictional authors for software testing\)) Tj ET
+BT /F2 12 Tf 1 0 0 1 60 678 Tm (Methods) Tj ET
+BT /F1 10 Tf 1 0 0 1 60 662 Tm (Patients who underwent robotic-assisted minimally invasive esophagectomy \(RAMIE\) or) Tj ET
+BT /F1 10 Tf 1 0 0 1 60 648 Tm (conventional minimally invasive esophagectomy \(MIE\) for esophageal cancer between 2015) Tj ET
+BT /F1 10 Tf 1 0 0 1 60 634 Tm (and 2020 were identified from a prospectively maintained institutional database.) Tj ET
+BT /F1 10 Tf 1 0 0 1 60 620 Tm (The choice of approach was made by the operating surgeon.) Tj ET
+BT /F1 10 Tf 1 0 0 1 60 598 Tm (Propensity score matching \(1:1\) was performed using age, sex, ASA classification, body) Tj ET
+BT /F1 10 Tf 1 0 0 1 60 584 Tm (mass index, clinical stage and neoadjuvant therapy. Smoking history and surgeon experi-) Tj ET
+BT /F1 10 Tf 1 0 0 1 60 570 Tm (ence were not available in the database and were not included in the model.) Tj ET
+BT /F1 10 Tf 1 0 0 1 60 548 Tm (Anastomotic leak was defined according to the Esophagectomy Complications Consensus) Tj ET
+BT /F1 10 Tf 1 0 0 1 60 534 Tm (Group \(ECCG\) definitions and confirmed by contrast study or endoscopy. Outcome assessors) Tj ET
+BT /F1 10 Tf 1 0 0 1 60 520 Tm (were not blinded to the surgical approach.) Tj ET
+BT /F1 10 Tf 1 0 0 1 60 498 Tm (Follow-up began on the date of surgery. Patients with missing data on clinical stage) Tj ET
+BT /F1 10 Tf 1 0 0 1 60 484 Tm (\(n = 12\) were excluded from the analysis. No imputation was performed.) Tj ET
+endstream
+endobj
+6 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents 5 0 R >>
+endobj
+7 0 obj
+<< /Length 1159 >>
+stream
+BT /F2 12 Tf 1 0 0 1 60 740 Tm (Results) Tj ET
+BT /F1 10 Tf 1 0 0 1 60 724 Tm (A total of 412 patients were identified. After matching, 120 patients were included in) Tj ET
+BT /F1 10 Tf 1 0 0 1 60 710 Tm (each group. Baseline characteristics were well balanced after matching.) Tj ET
+BT /F1 10 Tf 1 0 0 1 60 688 Tm (Anastomotic leak occurred in 14 \(11.7%\) patients after RAMIE and 22 \(18.3%\) after MIE) Tj ET
+BT /F1 10 Tf 1 0 0 1 60 674 Tm (\(OR 0.59, 95% CI 0.29 to 1.21, p = 0.15\).) Tj ET
+BT /F1 10 Tf 1 0 0 1 60 652 Tm (Table 2. Postoperative outcomes in the matched cohort) Tj ET
+BT /F1 10 Tf 1 0 0 1 60 638 Tm (Anastomotic leak 14 \(11.7%\) 22 \(18.3%\) 0.15) Tj ET
+BT /F1 10 Tf 1 0 0 1 60 624 Tm (Pneumonia 18 \(15.0%\) 25 \(20.8%\) 0.24) Tj ET
+BT /F2 12 Tf 1 0 0 1 60 602 Tm (Discussion) Tj ET
+BT /F1 10 Tf 1 0 0 1 60 586 Tm (The study was not registered and no protocol or statistical analysis plan was published.) Tj ET
+BT /F1 10 Tf 1 0 0 1 60 572 Tm (Residual confounding by unmeasured factors such as frailty cannot be excluded. No sensi-) Tj ET
+BT /F1 10 Tf 1 0 0 1 60 558 Tm (tivity analyses for unmeasured confounding were performed.) Tj ET
+endstream
+endobj
+8 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents 7 0 R >>
+endobj
+xref
+0 9
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000121 00000 n 
+0000000218 00000 n 
+0000000320 00000 n 
+0000002132 00000 n 
+0000002268 00000 n 
+0000003479 00000 n 
+trailer
+<< /Size 9 /Root 1 0 R >>
+startxref
+3615
+%%EOF
