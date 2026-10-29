@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useParams, useSearchParams } from 'react-router-dom';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { DOMAINS, judgementLabel, type DomainId, type Judgement } from '@robercop/rules';
-import { evaluateAssessment, emptyResponse, type Assessment, type EvidenceItem } from '@robercop/shared';
+import { evaluateAssessment, emptyResponse, isLegacyRevision, type Assessment, type EvidenceItem } from '@robercop/shared';
 import { errorMessage, get, patch, post } from '../../api';
 import { useCrumbs } from '../../App';
 import { AssistantProvider, useAssistant } from '../../assistant/AssistantContext';
@@ -54,7 +54,8 @@ function Inner({ payload, setPayload, reload }: { payload: AssessmentPayload; se
   useEffect(() => setEvidence(payload.evidence), [payload.evidence]);
 
   const evidenceById = useMemo(() => new Map(evidence.map((e) => [e.id, e])), [evidence]);
-  const ev = useMemo(() => evaluateAssessment(a, snapshot, evidenceById), [a, snapshot, evidenceById]);
+  const legacyRevision = isLegacyRevision(payload.revision);
+  const ev = useMemo(() => evaluateAssessment(a, snapshot, evidenceById, { legacyRevision }), [a, snapshot, evidenceById, legacyRevision]);
 
   const queue = useMemo(
     () =>
@@ -248,9 +249,21 @@ function Inner({ payload, setPayload, reload }: { payload: AssessmentPayload; se
           )}
         </aside>
         <main className="ws-main">
+          {legacyRevision && (!latestRevision || latestRevision === a.studyRevisionId) && (
+            <div className="banner warn">
+              <span className="grow">
+                Imported from a legacy session. The study details have not been reviewed yet: open the{' '}
+                <Link to={`/studies/${payload.study.id}`}>Study session</Link>, check and approve it, then return here to move this assessment onto the approved revision. Imported answers and judgements each need your confirmation.
+              </span>
+            </div>
+          )}
           {latestRevision && latestRevision !== a.studyRevisionId && (
             <div className="banner warn">
-              <span className="grow">This assessment uses study revision #{payload.revision.revisionNo}; a newer approved revision exists.</span>
+              <span className="grow">
+                {legacyRevision
+                  ? 'The study has now been approved. Move this imported assessment onto the approved revision.'
+                  : `This assessment uses study revision #${payload.revision.revisionNo}; a newer approved revision exists.`}
+              </span>
               {(canEdit || a.status === 'submitted') && a.reviewer === reviewer && (
                 <button
                   className="sm"

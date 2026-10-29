@@ -64,10 +64,17 @@ export function perProtocolReason(snapshot: StudySnapshot, result: ResultSpec | 
 export function evaluateAssessment(
   assessment: Assessment,
   snapshot: StudySnapshot,
-  evidence: Map<string, EvidenceItem>
+  evidence: Map<string, EvidenceItem>,
+  opts: { legacyRevision?: boolean } = {}
 ): AssessmentEvaluation {
   const result = snapshot.results.find((r) => r.id === assessment.resultId);
   const problems: Problem[] = [];
+  if (opts.legacyRevision) {
+    problems.push({
+      target: 'scope',
+      message: 'The study details were imported from a legacy file and have not been reviewed. Check and approve the Study session, then move this assessment to the approved revision.'
+    });
+  }
   const flags: Record<string, string[]> = {};
   const flag = (id: string, msg: string) => (flags[id] ??= []).push(msg);
 

@@ -9,12 +9,20 @@ import { buildApp } from '../src/app.js';
 
 export const FIXTURE_PDF = resolve(__dirname, 'fixtures', 'sample-study.pdf');
 
+export interface UploadFile {
+  name: string;
+  bytes: Buffer | Uint8Array;
+  type?: string;
+}
+
 export interface TestEnv {
   app: FastifyInstance;
   services: Services;
   dataDir: string;
   api: <T = any>(method: string, url: string, body?: unknown, reviewer?: string) => Promise<{ status: number; body: T }>;
-  upload: (url: string, file: string, fields: Record<string, string>, reviewer?: string) => Promise<{ status: number; body: any }>;
+  upload: (url: string, file: string | UploadFile, fields: Record<string, string>, reviewer?: string) => Promise<{ status: number; body: any }>;
+  /** Raw response (for downloads). */
+  raw: (method: string, url: string, body?: unknown, reviewer?: string) => Promise<{ status: number; headers: Record<string, unknown>; bytes: Buffer; text: string }>;
   close: () => Promise<void>;
 }
 
@@ -39,14 +47,24 @@ export async function setup(overrides: Record<string, unknown> = {}): Promise<Te
     }
     return { status: res.statusCode, body: parsed as any };
   };
-  const upload = async (url: string, file: string, fields: Record<string, string>, reviewer = 'Alice') => {
+  const raw = async (method: string, url: string, body?: unknown, reviewer = 'Alice') => {
+    const res = await app.inject({
+      method: method as 'GET',
+      url,
+      headers: { host, 'x-robercop': '1', 'x-reviewer': encodeURIComponent(reviewer), ...(body !== undefined ? { 'content-type': 'application/json' } : {}) },
+      payload: body !== undefined ? JSON.stringify(body) : undefined
+    });
+    return { status: res.statusCode, headers: res.headers as Record<string, unknown>, bytes: res.rawPayload, text: res.body };
+  };
+  const upload = async (url: string, file: string | UploadFile, fields: Record<string, string>, reviewer = 'Alice') => {
+    const f: UploadFile = typeof file === 'string' ? { name: file.split('/').pop()!, bytes: readFileSync(file), type: 'application/pdf' } : file;
     const boundary = '----robercop' + Math.random().toString(16).slice(2);
     const parts: Buffer[] = [];
     for (const [k, v] of Object.entries(fields)) {
       parts.push(Buffer.from(`--${boundary}\r\nContent-Disposition: form-data; name="${k}"\r\n\r\n${v}\r\n`));
     }
-    parts.push(Buffer.from(`--${boundary}\r\nContent-Disposition: form-data; name="file"; filename="${file.split('/').pop()}"\r\nContent-Type: application/pdf\r\n\r\n`));
-    parts.push(readFileSync(file));
+    parts.push(Buffer.from(`--${boundary}\r\nContent-Disposition: form-data; name="file"; filename="${f.name}"\r\nContent-Type: ${f.type ?? 'application/octet-stream'}\r\n\r\n`));
+    parts.push(Buffer.from(f.bytes));
     parts.push(Buffer.from(`\r\n--${boundary}--\r\n`));
     const res = await app.inject({
       method: 'POST',
@@ -62,6 +80,7 @@ export async function setup(overrides: Record<string, unknown> = {}): Promise<Te
     dataDir,
     api,
     upload,
+    raw,
     close: async () => {
       await app.close();
       services.close();

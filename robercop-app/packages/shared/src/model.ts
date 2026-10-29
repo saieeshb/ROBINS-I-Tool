@@ -122,9 +122,17 @@ export interface StudyRevision {
   snapshot: StudySnapshot;
   /** SHA-256 of the canonical snapshot; used to detect changed baselines across installations. */
   hash: string;
+  /** Reviewer who approved the content, or LEGACY_APPROVER for content imported from a legacy file. */
   approvedBy: string;
   approvedAt: string;
   note: string;
+}
+
+/** Marks study revisions created by a legacy import: they record imported content, not a human approval. */
+export const LEGACY_APPROVER = 'legacy import (not reviewed)';
+
+export function isLegacyRevision(r: Pick<StudyRevision, 'approvedBy'>): boolean {
+  return r.approvedBy === LEGACY_APPROVER;
 }
 
 export type DocumentRole = 'manuscript' | 'supplement' | 'protocol' | 'registry' | 'other' | 'reference';

@@ -188,6 +188,25 @@ export class Store {
       }));
   }
 
+  /** Adds another installation's history for an entity, so decision history survives package exchange. */
+  importRevisions(entityType: string, entityId: string, rows: { id: string; version: number; actor: string; reason: string; createdAt: string; data: unknown }[], packageId: string): void {
+    for (const r of rows) {
+      const exists = this.db.get('SELECT 1 FROM revisions WHERE id = ?', r.id);
+      if (exists) continue;
+      this.db.run(
+        'INSERT INTO revisions (id, entity_type, entity_id, version, data, actor, reason, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+        r.id,
+        entityType,
+        entityId,
+        r.version,
+        JSON.stringify(r.data),
+        r.actor,
+        r.reason.startsWith('imported') ? r.reason : `imported (${packageId.slice(0, 8)}): ${r.reason}`,
+        r.createdAt
+      );
+    }
+  }
+
   touch(): string {
     return now();
   }

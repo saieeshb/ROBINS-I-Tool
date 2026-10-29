@@ -4,6 +4,7 @@ import {
   emptyResponse,
   evaluateAssessment,
   domainForQuestion,
+  isLegacyRevision,
   perProtocolReason,
   type Assessment,
   type AssessmentEvaluation,
@@ -44,7 +45,8 @@ export class AssessmentService {
   }
 
   evaluate(a: Assessment): AssessmentEvaluation {
-    return evaluateAssessment(a, this.revisionFor(a).snapshot, this.evidenceMap(a));
+    const revision = this.revisionFor(a);
+    return evaluateAssessment(a, revision.snapshot, this.evidenceMap(a), { legacyRevision: isLegacyRevision(revision) });
   }
 
   /** Starts a Domain session for a result, based on the study's approved revision (no file import needed). */
@@ -54,6 +56,7 @@ export class AssessmentService {
     const project = this.store.projects.require(study.projectId);
     if (!study.approvedRevisionId) throw new ValidationError('Approve the Study session before starting a Domain session.');
     const revision = this.studies.revision(study.approvedRevisionId);
+    if (isLegacyRevision(revision)) throw new ValidationError('Review and approve the imported study before starting a Domain session.');
     const inRevision = revision.snapshot.results.find((r) => r.id === resultId);
     if (!inRevision) throw new ValidationError('This result was added after the last approval. Approve the study again first.');
     const unsupported = perProtocolReason(revision.snapshot, inRevision);
@@ -62,7 +65,11 @@ export class AssessmentService {
     const existing = this.store.assessments.find({ result_id: resultId }).filter((a) => a.role !== 'consensus');
     const mine = existing.find((a) => a.reviewer === actor);
     if (mine) throw new ValidationError(`You already have an assessment of this result (${mine.status}).`);
-    let role: AssessmentRole = input.role ?? (existing.length === 0 ? 'first' : 'second');
+    // On a computer that received this study as an independent assignment, the reviewer here is the second reviewer.
+    const assignedHere = this.store.packages
+      .find({ project_id: project.id })
+      .some((p) => p.direction === 'import' && p.kind === 'independent_assignment' && (p.manifest.study as { id?: string } | undefined)?.id === study.id);
+    let role: AssessmentRole = input.role ?? (existing.length === 0 && !assignedHere ? 'first' : 'second');
     if (role === 'consensus') throw new ValidationError('Consensus records are created from the Verify stage.');
     if (project.verificationMode === 'checking' && existing.length > 0) {
       throw new ValidationError('In checking mode the second reviewer checks the first assessment instead of starting a new one.');

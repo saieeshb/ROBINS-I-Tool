@@ -7,6 +7,9 @@ import { ParseService } from '../parsing/service.js';
 import { AssessmentService } from './assessments.js';
 import { DocumentService } from './documents.js';
 import { EvidenceService } from './evidence.js';
+import { ExportService } from './exports.js';
+import { LegacyService } from './legacy.js';
+import { PackageService } from './packages.js';
 import { ProjectService } from './projects.js';
 import { StudyService } from './studies.js';
 import { VerificationService } from './verification.js';
@@ -36,6 +39,9 @@ export interface Services {
   verification: VerificationService;
   ai: ClaudeCodeRunner;
   proposals: ProposalService;
+  packages: PackageService;
+  legacy: LegacyService;
+  exports: ExportService;
   settings(): AppSettings;
   close(): void;
 }
@@ -57,6 +63,9 @@ export function createServices(config: AppConfig): Services {
   const verification = new VerificationService(store, assessments);
   const ai = new ClaudeCodeRunner(store, config, documents, studies, assessments, evidence, () => settings().ai);
   const proposals = new ProposalService(store, evidence);
+  const packages = new PackageService(store, config, documents);
+  const legacy = new LegacyService(store, config, studies);
+  const exports = new ExportService(store, config, studies, documents, assessments, verification);
 
   // A new parse of a document makes earlier quotation checks against it stale; re-run them.
   parsing.onParsed = (documentId) => {
@@ -79,6 +88,9 @@ export function createServices(config: AppConfig): Services {
     verification,
     ai,
     proposals,
+    packages,
+    legacy,
+    exports,
     settings,
     close: () => db.close()
   };

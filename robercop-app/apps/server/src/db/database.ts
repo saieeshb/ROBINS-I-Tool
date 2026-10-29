@@ -150,7 +150,8 @@ export class Collection<T extends Entity> {
 
   insert(entity: T, meta: WriteMeta): T {
     const t = now();
-    const e = { ...entity, version: 1, createdAt: entity.createdAt ?? t, updatedAt: t } as T;
+    // Callers pass createdAt: '' for new records; only a real timestamp is kept.
+    const e = { ...entity, version: 1, createdAt: entity.createdAt || t, updatedAt: t } as T;
     const cols = Object.keys(this.columns);
     this.database.tx(() => {
       this.database.run(
@@ -165,6 +166,44 @@ export class Collection<T extends Entity> {
       this.recordRevision(e, meta, false);
     });
     return e;
+  }
+
+  /** Inserts an entity exactly as given (timestamps preserved); used when importing records from another installation. */
+  insertRaw(entity: T, meta: WriteMeta): T {
+    const t = now();
+    const e = { ...entity, version: entity.version || 1, createdAt: entity.createdAt || t, updatedAt: entity.updatedAt || t } as T;
+    const cols = Object.keys(this.columns);
+    this.database.tx(() => {
+      this.database.run(
+        `INSERT INTO ${this.table} (id, data, version, created_at, updated_at${cols.map((c) => `, ${c}`).join('')}) VALUES (?, ?, ?, ?, ?${cols.map(() => ', ?').join('')})`,
+        e.id,
+        JSON.stringify(e),
+        e.version,
+        e.createdAt!,
+        e.updatedAt!,
+        ...cols.map((c) => this.columns[c](e))
+      );
+      this.recordRevision(e, meta, false);
+    });
+    return e;
+  }
+
+  /** Replaces a record with an imported version (no optimistic check; callers decide that replacing is safe). */
+  replaceRaw(entity: T, meta: WriteMeta): T {
+    return this.database.tx(() => {
+      this.require(entity.id);
+      const cols = Object.keys(this.columns);
+      this.database.run(
+        `UPDATE ${this.table} SET data = ?, version = ?, updated_at = ?${cols.map((c) => `, ${c} = ?`).join('')} WHERE id = ?`,
+        JSON.stringify(entity),
+        entity.version,
+        entity.updatedAt ?? now(),
+        ...cols.map((c) => this.columns[c](entity)),
+        entity.id
+      );
+      this.recordRevision(entity, meta, false);
+      return entity;
+    });
   }
 
   /**

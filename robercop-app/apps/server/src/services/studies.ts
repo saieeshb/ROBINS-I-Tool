@@ -1,6 +1,7 @@
 import { evaluateTriage, type AnswerMap } from '@robercop/rules';
 import {
   emptyStudyData,
+  isLegacyRevision,
   type ConfounderRow,
   type ResultSpec,
   type Study,
@@ -188,7 +189,8 @@ export class StudyService {
     const snapshot = this.snapshot(study, results);
     const hash = contentHash(snapshot);
     const latest = this.latestRevision(studyId);
-    if (latest && latest.hash === hash) {
+    // Reuse an identical revision only if a reviewer approved it; a legacy-import revision is never an approval.
+    if (latest && latest.hash === hash && !isLegacyRevision(latest)) {
       if (study.approvedRevisionId !== latest.id) {
         this.store.studies.mutate(studyId, (s) => void ((s.approvedRevisionId = latest.id), (s.status = 'approved')), { actor, reason: 'approved' });
       }
