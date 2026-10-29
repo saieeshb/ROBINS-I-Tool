@@ -122,10 +122,16 @@ export class SaveQueue<P, E extends { version: number }> {
   private inflight = false;
   private timer: ReturnType<typeof setTimeout> | null = null;
   private retryMs = 1000;
+  /** Set when saving stopped on a conflict or while offline; settle() does not wait for those. */
+  private stalled = false;
   version: number | undefined;
+
+  private readonly onPageHide = () => void this.flush();
 
   constructor(public opts: AutosaveOptions<P, E>) {
     this.version = opts.version;
+    // Closing or reloading the tab during the autosave delay sends the pending edits right away.
+    window.addEventListener('pagehide', this.onPageHide);
   }
 
   setVersion(v: number | undefined) {
@@ -155,6 +161,7 @@ export class SaveQueue<P, E extends { version: number }> {
       const saved = await this.opts.send(patch, this.version);
       this.version = saved.version;
       this.retryMs = 1000;
+      this.stalled = false;
       this.inflight = false;
       if (this.pending === null) {
         storeDraft(key, null);
@@ -164,6 +171,7 @@ export class SaveQueue<P, E extends { version: number }> {
       if (this.pending !== null) void this.flush();
     } catch (err) {
       this.inflight = false;
+      this.stalled = true;
       const e = err as ApiError;
       if (e.status === 0) {
         this.pending = this.pending === null ? patch : this.opts.merge(patch, this.pending);
@@ -181,6 +189,24 @@ export class SaveQueue<P, E extends { version: number }> {
         setSaveState(key, 'error', errorMessage(e));
         this.opts.onError?.(errorMessage(e));
       }
+    }
+  }
+
+  /** True while there are edits not yet acknowledged by the server. */
+  busy(): boolean {
+    return this.pending !== null || this.inflight;
+  }
+
+  /**
+   * Saves pending edits now and resolves once nothing is left to save. Call before any action whose result depends
+   * on the saved state (submit, respond to a check, reload), so a quick click never acts on stale data.
+   */
+  async settle(timeoutMs = 10_000): Promise<void> {
+    const start = Date.now();
+    while (this.busy() && Date.now() - start < timeoutMs) {
+      if (this.inflight) await new Promise((r) => setTimeout(r, 30));
+      else if (this.stalled && this.pending !== null) return;
+      else await this.flush();
     }
   }
 
@@ -205,6 +231,7 @@ export class SaveQueue<P, E extends { version: number }> {
   }
 
   dispose() {
+    window.removeEventListener('pagehide', this.onPageHide);
     if (this.pending !== null) storeDraft(this.opts.key, this.pending);
     void this.flush();
     clearSaveState(this.opts.key);

@@ -16,7 +16,7 @@ function sectionFor(target: string, ids: { results: string[]; confounders: strin
 }
 
 export function ApproveSection() {
-  const { payload, reload, go } = useStudy();
+  const { payload, reload, settle, go } = useStudy();
   const { toast, reviewer } = useSession();
   const nav = useNavigate();
   const [note, setNote] = useState('');
@@ -25,6 +25,7 @@ export function ApproveSection() {
 
   const approve = async () => {
     try {
+      await settle();
       await post(`/studies/${study.id}/approve`, { note });
       setNote('');
       toast('Study approved. Domain sessions now use this revision.');

@@ -50,7 +50,10 @@ export interface AssessCtxValue {
   view: View;
   setView: (v: View, q?: string | null) => void;
   focus: Focus;
+  /** Reloads after saving pending edits. */
   reload: () => Promise<void>;
+  /** Saves pending edits; await it before server actions such as submit or responding to a check. */
+  settle: () => Promise<void>;
   reloadEvidence: () => Promise<void>;
   addEvidenceToQuestion: (qid: string, ev: EvidenceItem) => void;
 }

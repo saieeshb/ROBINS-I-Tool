@@ -8,13 +8,14 @@ import { useAssess } from './context';
 
 /** Checking mode: change requests and confirmations recorded against a target, with the first reviewer's response. */
 export function VerificationNotes({ target }: { target: string }) {
-  const { payload, a, reload } = useAssess();
+  const { payload, a, reload, settle } = useAssess();
   const { reviewer, toast } = useSession();
   const [note, setNote] = useState('');
   const list = (payload.verification?.decisions ?? []).filter((d) => d.target === target && d.resolution !== 'superseded');
   if (list.length === 0) return null;
   const resolve = async (d: VerificationDecision, resolution: 'accepted' | 'declined') => {
     try {
+      await settle();
       await post(`/verifications/${d.id}/resolve`, { resolution, note });
       setNote('');
       void reload();
@@ -63,6 +64,10 @@ export function CheckerControls({ target, options }: { target: string; options: 
   const [comment, setComment] = useState('');
   if (!isChecker) return null;
   const latest = (payload.verification?.decisions ?? []).filter((d) => d.target === target && d.resolution !== 'superseded').at(-1);
+  // A confirmation covers the value that was confirmed; after a change (or a resolved request) it must be checked again.
+  const st = payload.verification?.status;
+  const recheck = !!st && (st.awaitingRecheck.includes(target) || st.changedSinceCheck.includes(target));
+  const confirmed = latest?.verdict === 'confirmed' && !recheck;
   const send = async (verdict: 'confirmed' | 'change_requested' | 'disagree') => {
     try {
       await post(`/assessments/${a.id}/verifications`, { target, verdict, proposedAnswer: proposed, comment });
@@ -80,9 +85,10 @@ export function CheckerControls({ target, options }: { target: string; options: 
         <span className="small">
           <strong>Check {target}:</strong>
         </span>
-        <button className="xs primary" disabled={latest?.verdict === 'confirmed'} onClick={() => void send('confirmed')}>
-          {latest?.verdict === 'confirmed' ? '✓ Confirmed' : 'Confirm'}
+        <button className="xs primary" disabled={confirmed} onClick={() => void send('confirmed')}>
+          {confirmed ? '✓ Confirmed' : recheck ? 'Confirm again' : 'Confirm'}
         </button>
+        {recheck && <span className="chip warn">changed — check again</span>}
         <button className="xs" onClick={() => setMode('change_requested')}>
           Request change
         </button>
@@ -113,7 +119,7 @@ export function CheckerControls({ target, options }: { target: string; options: 
 
 /** Consensus record: the two original answers for each disagreement in a domain, and resolving them. */
 export function ConsensusPanel({ domain }: { domain: DomainId }) {
-  const { payload, a, canEdit, reload } = useAssess();
+  const { payload, a, canEdit, reload, settle } = useAssess();
   const { toast } = useSession();
   const [final, setFinal] = useState<Record<string, string>>({});
   const [note, setNote] = useState<Record<string, string>>({});
@@ -163,6 +169,7 @@ export function ConsensusPanel({ domain }: { domain: DomainId }) {
                   disabled={!final[it.id] || !(note[it.id] ?? '').trim()}
                   onClick={async () => {
                     try {
+                      await settle();
                       await post(`/consensus-items/${it.id}/resolve`, { final: final[it.id], note: note[it.id] });
                       void reload();
                     } catch (e) {

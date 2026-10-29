@@ -50,7 +50,6 @@ function Inner({ payload, setPayload, reload }: { payload: AssessmentPayload; se
     { label: `${payload.resultName} · ${a.role === 'consensus' ? 'Consensus' : `Domain session (${a.reviewer})`}` }
   ]);
 
-  useEffect(() => setA(payload.assessment), [payload.assessment]);
   useEffect(() => setEvidence(payload.evidence), [payload.evidence]);
 
   const evidenceById = useMemo(() => new Map(evidence.map((e) => [e.id, e])), [evidence]);
@@ -79,8 +78,19 @@ function Inner({ payload, setPayload, reload }: { payload: AssessmentPayload; se
   );
   queue.setVersion(a.version);
   useEffect(() => () => queue.dispose(), [queue]);
+  // A reload replaces local state, except for edits still being saved, which are kept on top of the server copy.
+  useEffect(() => setA((cur) => (queue.busy() ? mergeSaved(cur, payload.assessment) : payload.assessment)), [payload.assessment, queue]);
+  const settle = useCallback(() => queue.settle(), [queue]);
+  const safeReload = useCallback(async () => {
+    await queue.settle();
+    await reload();
+  }, [queue, reload]);
   useEffect(() => {
-    if (queue.hasDraft() && canEdit && queue.resumeDraft(payload.assessment.version)) toast('Restored unsaved changes from your last session.');
+    if (queue.hasDraft() && canEdit && queue.resumeDraft(payload.assessment.version)) {
+      toast('Restored unsaved changes from your last session.');
+      // The restored edits are not in the loaded copy; show the server's version once they are saved.
+      void queue.settle().then(() => reload());
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -207,7 +217,8 @@ function Inner({ payload, setPayload, reload }: { payload: AssessmentPayload; se
     view,
     setView,
     focus,
-    reload,
+    reload: safeReload,
+    settle,
     reloadEvidence,
     addEvidenceToQuestion
   };
@@ -269,6 +280,7 @@ function Inner({ payload, setPayload, reload }: { payload: AssessmentPayload; se
                   className="sm"
                   onClick={async () => {
                     try {
+                      await settle();
                       await post(`/assessments/${a.id}/rebase`, {});
                       toast('Moved to the latest study revision. Check flagged judgements.');
                       void reload();

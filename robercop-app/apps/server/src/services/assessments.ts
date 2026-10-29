@@ -136,6 +136,8 @@ export class AssessmentService {
         if (change.final && change.final !== suggested && !(change.reason ?? '').trim()) {
           throw new ValidationError(`${d}: overriding the suggested judgement (${suggested}) requires a justification.`);
         }
+        // Re-sending an unchanged, standing decision (e.g. a restored draft) keeps its original attribution and time.
+        if (unchanged(next.domains[d], change)) continue;
         next.domains[d] = decision(change.final, change.reason ?? '', suggested ?? '', actor, t);
         if (next.overall.final) next.overall.needsReconfirm = 'A domain judgement changed after the overall judgement was confirmed.';
       }
@@ -149,7 +151,7 @@ export class AssessmentService {
           if (!ov.allowed.includes(f)) throw new ValidationError(`The overall judgement cannot be lower than the worst domain (${ov.suggested}).`);
           if (f !== ov.suggested && !(patch.overall.reason ?? '').trim()) throw new ValidationError('Escalating the overall judgement requires a justification.');
         }
-        next.overall = decision(f, patch.overall.reason ?? '', ov.suggested ?? '', actor, t);
+        if (!unchanged(next.overall, patch.overall)) next.overall = decision(f, patch.overall.reason ?? '', ov.suggested ?? '', actor, t);
       }
     }
     return this.store.assessments.update(next, { actor, reason: 'autosave' });
@@ -234,6 +236,10 @@ export class AssessmentService {
     // Not a participant: visible once the independent phase is over (two submitted assessments).
     return peers.filter((x) => x.status !== 'draft').length >= 2;
   }
+}
+
+function unchanged(current: DomainDecision | undefined, change: { final: Judgement | ''; reason?: string }): boolean {
+  return !!current && current.origin === 'reviewer' && !current.needsReconfirm && current.final === change.final && current.reason === (change.reason ?? '').trim();
 }
 
 export function decision(final: Judgement | '', reason: string, suggested: Judgement | '', actor: string, t: string): DomainDecision {

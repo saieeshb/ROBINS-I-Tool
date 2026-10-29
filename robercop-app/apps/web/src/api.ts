@@ -52,7 +52,9 @@ async function handle<T>(res: Response): Promise<T> {
 export async function api<T = any>(method: string, url: string, body?: unknown): Promise<T> {
   let res: Response;
   try {
-    res = await fetch(`/api${url}`, { method, headers: headers(body !== undefined), body: body !== undefined ? JSON.stringify(body) : undefined });
+    const json = body !== undefined ? JSON.stringify(body) : undefined;
+    // keepalive lets a save started while the tab closes still reach the server (browsers cap such bodies at 64 KB).
+    res = await fetch(`/api${url}`, { method, headers: headers(body !== undefined), body: json, keepalive: method !== 'GET' && !!json && json.length < 60_000 });
   } catch {
     throw new ApiError(0, 'Cannot reach the ROBer COP server. Is it still running?');
   }

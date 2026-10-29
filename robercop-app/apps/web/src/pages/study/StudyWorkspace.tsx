@@ -219,7 +219,10 @@ function StudyInner({ payload, setPayload, reload }: { payload: StudyPayload; se
     }
   };
 
-  const ctx: StudyCtxValue = { payload, evidence, reloadEvidence, reload, updateData, updateLabel, updateResult, focus, linkTarget, setLinkTarget, linkEvidence, linkedIds, go };
+  const settle = useCallback(async () => {
+    await Promise.all([studyQueue.settle(), ...[...resultQueues.current.values()].map((q) => q.settle())]);
+  }, [studyQueue]);
+  const ctx: StudyCtxValue = { payload, evidence, reloadEvidence, reload, settle, updateData, updateLabel, updateResult, focus, linkTarget, setLinkTarget, linkEvidence, linkedIds, go };
   const docs = payload.documents.map((d) => ({ id: d.id, label: d.label, role: d.role, parsed: !!d.job }));
   const highlights = evidence.filter((e) => e.kind === 'quote' && e.check.locations[0]).map((e) => ({ documentId: e.check.locations[0].documentId, page: e.check.locations[0].page, text: e.check.locations[0].text }));
   const groups = [...new Set(SECTIONS.map((s) => s.group))];

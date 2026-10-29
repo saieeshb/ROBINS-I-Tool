@@ -4,7 +4,7 @@ import { DOMAINS, getQuestion, judgementLabel, type Judgement } from '@robercop/
 import { download, errorMessage, post } from '../../api';
 import { JudgementBadge, ProblemList, TextArea, fmtTime } from '../../components/ui';
 import { useSession } from '../../session';
-import { useAssess } from './context';
+import { useAssess, type View } from './context';
 import { CheckerControls, VerificationNotes } from './Review';
 
 export function TriagePanel() {
@@ -209,11 +209,12 @@ function targetToView(t: string): { view: string; q?: string } {
 }
 
 export function FinishPanel() {
-  const { ev, a, payload, setView, reload, canEdit, isChecker } = useAssess();
+  const { ev, a, payload, setView, reload, settle, canEdit, isChecker } = useAssess();
   const { toast, reviewer } = useSession();
   const [reason, setReason] = useState('');
   const submit = async () => {
     try {
+      await settle();
       await post(`/assessments/${a.id}/submit`, {});
       toast('Submitted. Your answers are now locked; the next step is verification.');
       void reload();
@@ -223,6 +224,7 @@ export function FinishPanel() {
   };
   const reopen = async () => {
     try {
+      await settle();
       await post(`/assessments/${a.id}/reopen`, { reason });
       setReason('');
       void reload();
@@ -232,6 +234,7 @@ export function FinishPanel() {
   };
   const finalize = async () => {
     try {
+      await settle();
       await post(`/assessments/${a.id}/finalize`, {});
       toast('Finalized.');
       void reload();
@@ -301,6 +304,16 @@ export function FinishPanel() {
             <button className="primary mt" disabled={payload.finalizeProblems.length > 0} onClick={() => void finalize()}>
               Finalize documented assessment
             </button>
+          )}
+          {isChecker && status && status.awaitingRecheck.length + status.changedSinceCheck.length > 0 && (
+            <div className="small mt">
+              To check again:{' '}
+              {[...status.awaitingRecheck, ...status.changedSinceCheck].map((t) => (
+                <button key={t} className="xs" style={{ marginRight: 4 }} onClick={() => setView(t === 'overall' ? 'overall' : ((t.startsWith('Q') ? `D${t[1]}` : t) as View), t.startsWith('Q') ? t : null)}>
+                  {t}
+                </button>
+              ))}
+            </div>
           )}
           {isChecker && status && status.unverified.length > 0 && (
             <button

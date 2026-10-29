@@ -26,6 +26,8 @@ export interface StudyCtxValue {
   evidence: EvidenceItem[];
   reloadEvidence: () => Promise<void>;
   reload: () => Promise<void>;
+  /** Saves pending edits; await it before approving. */
+  settle: () => Promise<void>;
   updateData: (fn: (d: StudyData) => void) => void;
   updateLabel: (label: string) => void;
   updateResult: (id: string, patch: Partial<ResultSpec>) => void;
