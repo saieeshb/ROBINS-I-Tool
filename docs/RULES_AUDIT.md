@@ -4,10 +4,10 @@ Ruleset implemented in `packages/rules`: `robins-i-v2@2025-11-20/itt-variant-a/1
 
 Sources checked:
 
-- `ROBINS-I 2025.pdf`: question wording, "If … to …" conditions, response options and Guidance note 17 (overall).
-- `D1.png` … `D6.png`, `OVERALL.png`: algorithm diagrams from the same release.
-- `robins-i-v2-tool.html` / `robins-i-v2-evidence-bank.html`: legacy branching (`hideIf`) and scoring (`algoD1` … `algoD6`, `renderOverall`).
-- `DOMAIN_SESSION_PROMPT.md`: the text algorithms used in the chat workflow.
+- `reference/ROBINS-I 2025.pdf`: question wording, "If … to …" conditions, response options and Guidance note 17 (overall).
+- `reference/D1.png` … `D6.png`, `OVERALL.png`: algorithm diagrams from the same release.
+- `robins-i-v2-tool.html` / `robins-i-v2-evidence-bank.html`: legacy branching (`hideIf`) and scoring (`algoD1` … `algoD6`, `renderOverall`). These earlier HTML tools have been removed from the repository; they remain in the git history (for example at commit `16e1ec8`).
+- `reference/SESSION_PROMPT 1.md` and `SESSION_PROMPT 2.md`: the text algorithms used in the earlier chat-based workflow.
 
 Where the diagrams and the text prompts disagree, the diagrams (the official release) are used. Every terminal edge of
 every diagram has a test in `packages/rules/test/algorithms.test.ts`. A second test walks every reachable answer
