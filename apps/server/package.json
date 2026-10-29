@@ -1,0 +1,26 @@
+{
+  "name": "@robercop/server",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch --disable-warning=ExperimentalWarning src/main.ts",
+    "build": "node build.mjs"
+  },
+  "dependencies": {
+    "@fastify/multipart": "10.1.6",
+    "@fastify/static": "10.1.8",
+    "@modelcontextprotocol/sdk": "1.32.2",
+    "@robercop/rules": "*",
+    "@robercop/shared": "*",
+    "exceljs": "4.4.0",
+    "fastify": "5.12.7",
+    "fflate": "0.8.3",
+    "pdfjs-dist": "4.10.38",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.2",
+    "tsx": "4.23.15"
+  }
+}

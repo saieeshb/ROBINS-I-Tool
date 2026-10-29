@@ -1,0 +1,6 @@
+node_modules/
+dist/
+coverage/
+.robercop-data/
+python/.venv/
+*.log

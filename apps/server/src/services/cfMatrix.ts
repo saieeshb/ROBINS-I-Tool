@@ -1,0 +1,154 @@
+/** Default project confounding-factor matrix (outcome → important confounding factors), from important_confounding_factors.json. */
+export const DEFAULT_CF_MATRIX: Record<string, string[]> = {
+  "Anastomotic Leak": [
+    "ASA Physical Status Classification",
+    "Comorbidities",
+    "Tumor Location",
+    "Smoking History",
+    "Surgeon Experience/Volume"
+  ],
+  "Anastomotic Stricture": [
+    "Tumor Location",
+    "Neoadjuvant Therapy Status (RT)",
+    "Surgeon Experience/Volume"
+  ],
+  "Blood Loss": [
+    "BMI",
+    "Clinical TNM Stage",
+    "Tumor Location",
+    "Surgeon Experience/Volume"
+  ],
+  "Cardiac Complications/Arrhythmia/Overall Complications/MAJOR Cx": [
+    "Age",
+    "ASA Physical Status Classification",
+    "Comorbidities",
+    "Smoking History"
+  ],
+  "Chylothorax/Chyle Leak": [
+    "BMI",
+    "Clinical TNM Stage",
+    "Tumor Location",
+    "Neoadjuvant Therapy Status (CRT)",
+    "Surgeon Experience/Volume"
+  ],
+  "Conversion to Open": [
+    "BMI",
+    "Clinical TNM Stage",
+    "Tumor Location",
+    "Surgeon Experience/Volume"
+  ],
+  "Disease-Free Survival/Overall Survival": [
+    "Age",
+    "ASA Physical Status Classification",
+    "Comorbidities",
+    "Clinical TNM Stage",
+    "Tumor Histology",
+    "Neoadjuvant Therapy Status",
+    "Hospital Volume",
+    "Surgeon Experience/Volume"
+  ],
+  "Dysphagia/Functional Outcomes": [
+    "Age",
+    "Comorbidities",
+    "Clinical TNM Stage",
+    "Tumor Location"
+  ],
+  "Hospital Length of Stay/ICU Length of Stay": [
+    "Age",
+    "ASA Physical Status Classification",
+    "Comorbidities",
+    "Hospital Volume",
+    "Surgeon Experience/Volume"
+  ],
+  "In-Hospital Mortality/Mortality 30-Day/90-Day": [
+    "Age",
+    "ASA Physical Status Classification",
+    "Comorbidities",
+    "Hospital Volume",
+    "Surgeon Experience/Volume"
+  ],
+  "LN Yield by Station (RLN, THORACIC, etc)": [
+    "Clinical TNM Stage",
+    "Tumor Histology",
+    "Tumor Location",
+    "Hospital Volume",
+    "Surgeon Experience/Volume"
+  ],
+  "Lymph Node Total /Positive": [
+    "Clinical TNM Stage",
+    "Tumor Histology",
+    "Tumor Location",
+    "Neoadjuvant Therapy Status",
+    "Hospital Volume",
+    "Surgeon Experience/Volume"
+  ],
+  "Operative Time": [
+    "BMI",
+    "Clinical TNM Stage",
+    "Tumor Location",
+    "Surgeon Experience/Volume"
+  ],
+  "Pain Scores": [
+    "Age",
+    "Sex"
+  ],
+  "Pleural Effusion": [
+    "ASA Physical Status Classification",
+    "Comorbidities",
+    "Tumor Location",
+    "Surgeon Experience/Volume"
+  ],
+  "Pneumonia": [
+    "Age",
+    "ASA Physical Status Classification",
+    "Comorbidities (COPD)",
+    "Tumor Location",
+    "Smoking History",
+    "Hospital Volume"
+  ],
+  "Quality of Life": [
+    "Age",
+    "Comorbidities",
+    "Clinical TNM Stage"
+  ],
+  "R0 Resection Rate/Positive Margin": [
+    "Clinical TNM Stage",
+    "Tumor Location",
+    "Neoadjuvant Therapy Status",
+    "Hospital Volume",
+    "Surgeon Experience/Volume"
+  ],
+  "Re-admission": [
+    "Age",
+    "ASA Physical Status Classification",
+    "Smoking History",
+    "Hospital Volume",
+    "Surgeon Experience/Volume"
+  ],
+  "Re-operation": [
+    "ASA Physical Status Classification",
+    "Hospital Volume",
+    "Surgeon Experience/Volume"
+  ],
+  "RLN Injury": [
+    "Clinical TNM Stage",
+    "Tumor Histology",
+    "Tumor Location",
+    "Hospital Volume",
+    "Surgeon Experience/Volume"
+  ],
+  "Total Recurrence": [
+    "Clinical TNM Stage",
+    "Tumor Histology",
+    "Tumor Location",
+    "Neoadjuvant Therapy Status",
+    "Hospital Volume",
+    "Surgeon Experience/Volume"
+  ],
+  "Wound Infection/SSI": [
+    "BMI",
+    "ASA Physical Status Classification",
+    "Comorbidities (DM)",
+    "Smoking History"
+  ]
+};
