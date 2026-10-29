@@ -62,7 +62,7 @@ describe('Domain 1 (Variant A) follows the official diagram', () => {
 
 describe('Domain 2 follows the official diagram', () => {
   // The three entry routes into the top 2.4 box.
-  const top = [{ 'Q2.1': 'Y/PY' }, { 'Q2.1': 'N/PN/NI', 'Q2.2': 'Y/PY' }, { 'Q2.1': 'N/PN/NI', 'Q2.2': 'N/PN/NI', 'Q2.3': 'SY' }];
+  const top: Record<string, string>[] = [{ 'Q2.1': 'Y/PY' }, { 'Q2.1': 'N/PN/NI', 'Q2.2': 'Y/PY' }, { 'Q2.1': 'N/PN/NI', 'Q2.2': 'N/PN/NI', 'Q2.3': 'SY' }];
   const middle = { 'Q2.1': 'N/PN/NI', 'Q2.2': 'N/PN/NI', 'Q2.3': 'WY/NI' };
   const bottom = { 'Q2.1': 'N/PN/NI', 'Q2.2': 'N/PN/NI', 'Q2.3': 'PN/N' };
   it('top 2.4 box', () => {
@@ -116,7 +116,7 @@ describe('Domain 3 follows the official diagram', () => {
     ]);
   });
   it('part C after at least one Serious part', () => {
-    const seriousRoutes = [
+    const seriousRoutes: Record<string, string>[] = [
       { 'Q3.1': 'SN', 'Q3.3': 'N/PN' },
       { 'Q3.1': 'Y/PY', 'Q3.2': 'N/PN/NI', 'Q3.3': 'Y/PY', 'Q3.4': 'Y/PY', 'Q3.5': 'Y/PY' },
       { 'Q3.1': 'SN', 'Q3.3': 'Y/PY', 'Q3.4': 'Y/PY', 'Q3.5': 'Y/PY' }

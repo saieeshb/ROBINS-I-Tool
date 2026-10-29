@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 export interface AppConfig {
   dataDir: string;
@@ -54,9 +54,11 @@ export function loadConfig(overrides: Partial<AppConfig> & { dataDir?: string } 
   const distWeb = join(appRoot, 'apps', 'web', 'dist');
   const builtMcp = join(appRoot, 'apps', 'server', 'dist', 'mcp.mjs');
   const srcMcp = join(appRoot, 'apps', 'server', 'src', 'mcp', 'main.ts');
+  // Runs execute in their own directory, so the tsx loader (development only) is referenced by absolute URL.
+  const tsxLoader = join(appRoot, 'node_modules', 'tsx', 'dist', 'loader.mjs');
   const mcpCommand = existsSync(builtMcp)
     ? { command: process.execPath, args: ['--disable-warning=ExperimentalWarning', builtMcp] }
-    : { command: process.execPath, args: ['--disable-warning=ExperimentalWarning', '--import', 'tsx', srcMcp] };
+    : { command: process.execPath, args: ['--disable-warning=ExperimentalWarning', '--import', pathToFileURL(tsxLoader).href, srcMcp] };
 
   const venvPython =
     process.platform === 'win32' ? join(appRoot, 'python', '.venv', 'Scripts', 'python.exe') : join(appRoot, 'python', '.venv', 'bin', 'python');

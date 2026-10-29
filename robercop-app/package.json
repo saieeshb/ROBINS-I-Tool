@@ -21,7 +21,8 @@
     "dev:web": "npm run dev -w @robercop/web",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
-    "typecheck": "tsc -p packages/rules && tsc -p packages/shared && tsc -p apps/server && tsc -p apps/web"
+    "typecheck": "tsc -p packages/rules && tsc -p packages/shared && tsc -p apps/server && tsc -p apps/web",
+    "test:live": "vitest run --config vitest.live.config.ts"
   },
   "devDependencies": {
     "@types/node": "^22.15.0",

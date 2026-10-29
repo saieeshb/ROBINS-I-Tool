@@ -63,10 +63,10 @@ export async function buildApp(services: Services, opts: { logger?: boolean } = 
 
   const web = services.config.webDist;
   if (web && existsSync(join(web, 'index.html'))) {
-    await app.register(fastifyStatic, { root: web, prefix: '/', wildcard: false });
-    const index = readFileSync(join(web, 'index.html'), 'utf8');
+    await app.register(fastifyStatic, { root: web, prefix: '/' });
     app.setNotFoundHandler((req, reply) => {
-      if (req.method === 'GET' && !req.url.startsWith('/api/')) return reply.type('text/html').send(index);
+      // Read per request so a rebuilt web app is picked up without restarting.
+      if (req.method === 'GET' && !req.url.startsWith('/api/')) return reply.type('text/html').header('Cache-Control', 'no-cache').send(readFileSync(join(web, 'index.html'), 'utf8'));
       return reply.code(404).send({ error: 'Not found' });
     });
   }
