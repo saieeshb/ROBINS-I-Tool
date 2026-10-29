@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import type { Project } from '@robercop/shared';
 import { errorMessage, post } from '../api';
 import { useCrumbs } from '../App';
+import { Icon } from '../components/Icon';
 import { Empty, Field, JudgementBadge, Modal, STATUS_CHIP } from '../components/ui';
 import { usePoll, useResource } from '../hooks/data';
 import { useSession } from '../session';
@@ -139,7 +140,15 @@ function StudyRow({ s, mode, onChange }: { s: DashStudy; mode: 'independent' | '
         </div>
         <span className={`chip ${STATUS_CHIP[s.status]}`}>{STUDY_STATUS[s.status]}</span>
         <span className="chip" title="Documents parsed">
-          {s.parsing > 0 ? '⏳ parsing' : `📄 ${s.parsed}/${s.documents} parsed`}
+          {s.parsing > 0 ? (
+            <>
+              <Icon name="clock" size={12} /> parsing
+            </>
+          ) : (
+            <>
+              <Icon name="file" size={12} /> {s.parsed}/{s.documents} parsed
+            </>
+          )}
         </span>
         <Link className="btn" to={`/studies/${s.id}`}>
           Study session
@@ -175,7 +184,14 @@ function StudyRow({ s, mode, onChange }: { s: DashStudy; mode: 'independent' | '
                     <div className="row wrap gap-sm">
                       {r.assessments.map((a) => (
                         <span key={a.id} className="chip" title={a.visible ? `${a.outstanding} outstanding, ${a.problems} open items` : 'Hidden until your own independent assessment is submitted'}>
-                          {a.role === 'consensus' ? '⚖ consensus' : a.reviewer} · {a.status}
+                          {a.role === 'consensus' ? (
+                            <>
+                              <Icon name="scale" size={12} /> consensus
+                            </>
+                          ) : (
+                            a.reviewer
+                          )}{' '}
+                          · {a.status}
                           {a.visible && a.overall ? (
                             <>
                               {' '}

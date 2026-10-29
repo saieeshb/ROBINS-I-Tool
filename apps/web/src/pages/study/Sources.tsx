@@ -75,10 +75,8 @@ export function SourcesSection() {
             <thead>
               <tr>
                 <th>Document</th>
-                <th>Role</th>
-                <th>Parsing</th>
-                <th>Coverage</th>
-                <th />
+                <th>Parsed text</th>
+                <th style={{ textAlign: 'right' }}>Re-parse</th>
               </tr>
             </thead>
             <tbody>
@@ -110,13 +108,15 @@ function DocRow({ d, onChange }: { d: StudyDoc; onChange: () => Promise<void> })
   return (
     <tr>
       <td>
-        <strong>{d.label}</strong>
-        <div className="tiny faint">
-          {d.filename} · {(d.size / 1024).toFixed(0)} KB · sha256 {d.sha256.slice(0, 10)}… · {fmtTime(d.createdAt)}
+        <strong>{d.label}</strong> <span className="chip">{ROLES.find(([v]) => v === d.role)?.[1] ?? d.role}</span>
+        <div className="tiny faint" style={{ overflowWrap: 'anywhere' }}>
+          {d.filename} · {(d.size / 1024).toFixed(0)} KB · added {fmtTime(d.createdAt)}
+        </div>
+        <div className="tiny faint mono" title={`SHA-256 ${d.sha256}`}>
+          sha256 {d.sha256.slice(0, 12)}
         </div>
       </td>
-      <td>{ROLES.find(([v]) => v === d.role)?.[1] ?? d.role}</td>
-      <td style={{ minWidth: 160 }}>
+      <td style={{ minWidth: 170 }}>
         {busy ? (
           <>
             <div className="row small">
@@ -136,8 +136,7 @@ function DocRow({ d, onChange }: { d: StudyDoc; onChange: () => Promise<void> })
           </span>
         )}
         {latest?.error && !busy && <div className="tiny" style={{ color: 'var(--bad)' }}>{latest.error.slice(0, 220)}</div>}
-      </td>
-      <td className="small">
+        <div className="small mt-sm">
         {job?.coverage ? (
           <>
             {job.coverage.pagesWithText}/{job.coverage.pages} pages with text · {job.coverage.blocks} blocks
@@ -150,17 +149,17 @@ function DocRow({ d, onChange }: { d: StudyDoc; onChange: () => Promise<void> })
               </div>
             ))}
           </>
-        ) : (
-          '—'
-        )}
+        ) : null}
+        </div>
       </td>
-      <td className="nowrap">
+      <td>
+        <div className="row wrap" style={{ justifyContent: 'flex-end', gap: 4 }}>
         <button className="xs" disabled={!!busy} onClick={() => void reparse('docling')} title="Parse with Docling (layout, tables, OCR)">
           Docling
-        </button>{' '}
+        </button>
         <button className="xs" disabled={!!busy} onClick={() => void reparse('pdfjs')} title="Quick text-layer parse">
           Built-in
-        </button>{' '}
+        </button>
         <button
           className="xs danger"
           onClick={async () => {
@@ -175,6 +174,7 @@ function DocRow({ d, onChange }: { d: StudyDoc; onChange: () => Promise<void> })
         >
           Remove
         </button>
+        </div>
       </td>
     </tr>
   );

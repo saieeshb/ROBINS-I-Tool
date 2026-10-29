@@ -369,7 +369,8 @@ export class ExportService {
     const snap = b.revision.snapshot;
     const r = b.result;
     const vByTarget = new Map<string, VerificationDecision[]>();
-    for (const v of b.verifications) (vByTarget.get(v.target) ?? vByTarget.set(v.target, []).get(v.target)!).push(v);
+    // Inline notes show the standing decisions; superseded ones remain in the Excel/JSON exports and the decision log.
+    for (const v of b.verifications.filter((x) => x.resolution !== 'superseded')) (vByTarget.get(v.target) ?? vByTarget.set(v.target, []).get(v.target)!).push(v);
 
     const evidenceHtml = (ids: string[]) =>
       ids

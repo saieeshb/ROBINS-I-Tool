@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { BrowserRouter, Link, Route, Routes } from 'react-router-dom';
 import { SessionProvider, useSession } from './session';
+import { Icon } from './components/Icon';
 import { Modal, SaveStatus } from './components/ui';
 import { hasUnsavedChanges } from './hooks/data';
 import { ProjectsPage } from './pages/Projects';
@@ -59,7 +60,9 @@ function ReviewerSelect() {
   const names = [...new Set([...(settings?.reviewers ?? []), ...(reviewer ? [reviewer] : [])])];
   return (
     <>
+      <Icon name="user" size={16} />
       <select
+        aria-label="Reviewer"
         value={reviewer}
         onChange={(e) => {
           if (e.target.value === '__add') setAdding(true);
@@ -74,7 +77,7 @@ function ReviewerSelect() {
         {!reviewer && <option value="">Choose reviewer…</option>}
         {names.map((n) => (
           <option key={n} value={n}>
-            👤 {n}
+            {n}
           </option>
         ))}
         <option value="__add">+ Add reviewer…</option>
@@ -150,8 +153,8 @@ function Shell({ children }: { children: ReactNode }) {
         <SaveStatus />
         <AssistantChip />
         <ReviewerSelect />
-        <Link to="/settings" title="Settings" style={{ fontSize: 18 }}>
-          ⚙
+        <Link to="/settings" className="topbar-icon" title="Settings" aria-label="Settings">
+          <Icon name="settings" size={18} />
         </Link>
       </header>
       {children}

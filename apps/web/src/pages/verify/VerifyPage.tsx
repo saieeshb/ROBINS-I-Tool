@@ -2,6 +2,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import type { Project, VerificationDecision } from '@robercop/shared';
 import { errorMessage, post } from '../../api';
 import { useCrumbs } from '../../App';
+import { Icon } from '../../components/Icon';
 import { JudgementBadge, fmtTime } from '../../components/ui';
 import { useResource } from '../../hooks/data';
 import { useSession } from '../../session';
@@ -87,7 +88,15 @@ export function VerifyPage() {
           <tbody>
             {data.assessments.map((a) => (
               <tr key={a.id}>
-                <td>{a.role === 'consensus' ? '⚖ Consensus' : a.reviewer}</td>
+                <td>
+                  {a.role === 'consensus' ? (
+                    <span className="row gap-sm">
+                      <Icon name="scale" /> Consensus
+                    </span>
+                  ) : (
+                    a.reviewer
+                  )}
+                </td>
                 <td>{a.role}</td>
                 <td>{a.status}</td>
                 <td>{a.visible ? <JudgementBadge j={a.overall as never} /> : <span className="small faint">hidden during independent review</span>}</td>

@@ -48,9 +48,11 @@ export function AssistantProvider({ studyId, assessmentId, children, onRunDone }
   const [live, setLive] = useState<Record<string, LiveRun>>({});
   const [drawerOpen, setDrawerOpen] = useState(() => {
     try {
-      return localStorage.getItem('robercop.drawer') !== '0';
+      const saved = localStorage.getItem('robercop.drawer');
+      // Without a saved choice, open it only where it fits beside the PDF instead of covering it.
+      return saved === null ? window.innerWidth > 1500 : saved !== '0';
     } catch {
-      return true;
+      return window.innerWidth > 1500;
     }
   });
   const sources = useRef(new Map<string, EventSource>());

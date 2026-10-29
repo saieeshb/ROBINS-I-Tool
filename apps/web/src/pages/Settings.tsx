@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useCrumbs } from '../App';
+import { Icon } from '../components/Icon';
 import { Field } from '../components/ui';
 import { useSession } from '../session';
 
@@ -124,7 +125,7 @@ export function SettingsPage() {
         <div className="row wrap">
           {settings.reviewers.map((r) => (
             <span key={r} className="chip">
-              👤 {r}
+              <Icon name="user" size={12} /> {r}
             </span>
           ))}
         </div>
