@@ -95,7 +95,7 @@ export function SupportingQuote({ item, runId, target, questionIds = [] }: { ite
   const [kept, setKept] = useState(false);
   const loc = item.check?.locations[0];
   return (
-    <div className="ev" style={{ background: '#fcfbff' }}>
+    <div className="ev" style={{ background: 'var(--proposal-bg)' }}>
       <blockquote>“{item.quote}”</blockquote>
       <div className="meta">
         <CheckBadge check={item.check} />

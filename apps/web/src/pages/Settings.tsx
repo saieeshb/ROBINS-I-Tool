@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useCrumbs } from '../App';
 import { Icon } from '../components/Icon';
+import { setThemePref, useTheme, type ThemePref } from '../theme';
 import { Field } from '../components/ui';
 import { useSession } from '../session';
 
@@ -132,6 +133,13 @@ export function SettingsPage() {
       </div>
 
       <div className="card">
+        <h3>Appearance</h3>
+        <Field label="Theme" hint="“System” follows your computer’s light or dark setting. The PDF pages always stay white, like paper.">
+          <AppearanceSelect />
+        </Field>
+      </div>
+
+      <div className="card">
         <h3>Data</h3>
         <p className="small">
           Data directory: <code>{settings.dataDir}</code>
@@ -143,5 +151,16 @@ export function SettingsPage() {
         <p className="small faint">Installation ID: {settings.installationId}</p>
       </div>
     </div>
+  );
+}
+
+function AppearanceSelect() {
+  const { pref } = useTheme();
+  return (
+    <select value={pref} onChange={(e) => setThemePref(e.target.value as ThemePref)} style={{ maxWidth: 260 }}>
+      <option value="system">System</option>
+      <option value="light">Light</option>
+      <option value="dark">Dark</option>
+    </select>
   );
 }

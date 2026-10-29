@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import * as pdfjs from 'pdfjs-dist';
 import workerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 import { normalizeWithMap } from '@robercop/shared';
+import { Icon } from '../components/Icon';
 
 pdfjs.GlobalWorkerOptions.workerSrc = workerUrl;
 
@@ -27,6 +28,8 @@ interface Props {
   highlights?: { documentId: string; page: number | null; text: string }[];
   onSelectText?: (sel: { documentId: string; page: number; text: string }) => void;
   selectLabel?: string;
+  /** Shows a button that folds the source column away. */
+  onCollapse?: () => void;
 }
 
 type PdfDoc = pdfjs.PDFDocumentProxy;
@@ -200,7 +203,7 @@ function PageView({
   );
 }
 
-export function PdfViewer({ docs, focus, highlights = [], onSelectText, selectLabel = 'Add as evidence' }: Props) {
+export function PdfViewer({ docs, focus, highlights = [], onSelectText, selectLabel = 'Add as evidence', onCollapse }: Props) {
   const [docId, setDocId] = useState<string | null>(docs[0]?.id ?? null);
   const [pdf, setPdf] = useState<PdfDoc | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -238,6 +241,8 @@ export function PdfViewer({ docs, focus, highlights = [], onSelectText, selectLa
     if (!el) return;
     const apply = () =>
       void pdf.getPage(1).then((p) => {
+        // While the column is collapsed the viewer has no width; keep the last scale.
+        if (el.clientWidth < 120) return;
         const w = p.getViewport({ scale: 1 }).width;
         const next = Math.max(0.5, Math.min(3, (el.clientWidth - 56) / w));
         setScale((s) => (Math.abs(s - next) > 0.02 ? next : s));
@@ -284,7 +289,18 @@ export function PdfViewer({ docs, focus, highlights = [], onSelectText, selectLa
     setSelection({ x: rect.left + rect.width / 2, y: rect.top - 8, text, page: Number(pageEl.dataset.page) });
   };
 
-  if (docs.length === 0) return <div className="source-empty">No source documents yet. Attach the study PDF in the Study session.</div>;
+  const collapseBtn = onCollapse && (
+    <button className="xs panel-toggle-dark" onClick={onCollapse} title="Hide source ( ] )" aria-label="Hide source">
+      <Icon name="panelRightClose" size={14} />
+    </button>
+  );
+  if (docs.length === 0)
+    return (
+      <>
+        {collapseBtn && <div className="pdf-toolbar"><span className="grow" />{collapseBtn}</div>}
+        <div className="source-empty">No source documents yet. Attach the study PDF in the Study session.</div>
+      </>
+    );
   const current = docs.find((d) => d.id === docId);
   return (
     <>
@@ -292,8 +308,7 @@ export function PdfViewer({ docs, focus, highlights = [], onSelectText, selectLa
         <div className="source-tabs">
           {docs.map((d) => (
             <button key={d.id} className={d.id === docId ? 'active' : ''} onClick={() => setDocId(d.id)} title={d.label}>
-              {d.role === 'reference' ? '📘 ' : ''}
-              {d.label}
+              {d.role === 'reference' && <Icon name="book" size={12} />} {d.label}
             </button>
           ))}
         </div>
@@ -326,6 +341,7 @@ export function PdfViewer({ docs, focus, highlights = [], onSelectText, selectLa
             Open ↗
           </a>
         )}
+        {collapseBtn}
       </div>
       <div className="pdf-scroll" ref={scrollRef} onMouseUp={onMouseUp} onScroll={() => selection && setSelection(null)}>
         {error && <div className="source-empty">Could not open the PDF: {error}</div>}

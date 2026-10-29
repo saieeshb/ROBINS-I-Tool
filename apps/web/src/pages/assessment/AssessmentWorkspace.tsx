@@ -13,6 +13,7 @@ import { useSession } from '../../session';
 import { AssessCtx, useAssess, type AssessCtxValue, type AssessmentPayload, type View } from './context';
 import { DomainPanel } from './DomainPanel';
 import { FinishPanel, OverallPanel, TriagePanel } from './OverallPanel';
+import { CollapseNavButton, NavRail, SourceRail, usePanels } from '../panels';
 
 type Patch = {
   responses?: Record<string, { answer?: string; rationale?: string; evidenceIds?: string[]; confirm?: boolean }>;
@@ -197,7 +198,16 @@ function Inner({ payload, setPayload, reload }: { payload: AssessmentPayload; se
     [params, setParams]
   );
 
-  const focus = useCallback((f: Omit<FocusRequest, 'nonce'>) => setFocusReq({ ...f, nonce: Date.now() }), []);
+  const panels = usePanels();
+  const { showSource } = panels;
+  // Jumping to a quotation's page re-opens the source if it was folded away.
+  const focus = useCallback(
+    (f: Omit<FocusRequest, 'nonce'>) => {
+      showSource();
+      setFocusReq({ ...f, nonce: Date.now() });
+    },
+    [showSource]
+  );
   const ctx: AssessCtxValue = {
     payload,
     a,
@@ -250,13 +260,22 @@ function Inner({ payload, setPayload, reload }: { payload: AssessmentPayload; se
 
   return (
     <AssessCtx.Provider value={ctx}>
-      <div className={`workspace ${assistant.drawerOpen ? 'drawer-open' : ''}`}>
+      <div className={`workspace ${assistant.drawerOpen ? 'drawer-open' : ''} ${panels.className}`}>
         <aside className="ws-nav">
-          <Nav />
-          {!assistant.drawerOpen && (
-            <button className="ai mt" style={{ margin: '16px 8px' }} onClick={() => assistant.setDrawerOpen(true)}>
-              ✦ Show assistant
-            </button>
+          {panels.navCollapsed ? (
+            <NavRail onExpand={panels.toggleNav} onAssistant={assistant.drawerOpen ? undefined : () => assistant.setDrawerOpen(true)}>
+              <DomainRail />
+            </NavRail>
+          ) : (
+            <>
+              <CollapseNavButton onClick={panels.toggleNav} />
+              <Nav />
+              {!assistant.drawerOpen && (
+                <button className="ai mt" style={{ margin: '16px 8px' }} onClick={() => assistant.setDrawerOpen(true)}>
+                  ✦ Show assistant
+                </button>
+              )}
+            </>
           )}
         </aside>
         <main className="ws-main">
@@ -306,7 +325,17 @@ function Inner({ payload, setPayload, reload }: { payload: AssessmentPayload; se
           {view === 'finish' && <FinishPanel />}
         </main>
         <section className="ws-source">
-          <PdfViewer docs={docs} focus={focusReq} highlights={highlights} onSelectText={canEdit ? addSelection : undefined} selectLabel={activeQ ? `Add as evidence for ${activeQ}` : 'Save as evidence'} />
+          {panels.sourceCollapsed && <SourceRail onExpand={panels.toggleSource} count={docs.length} />}
+          <div className="viewer">
+            <PdfViewer
+              docs={docs}
+              focus={focusReq}
+              highlights={highlights}
+              onSelectText={canEdit ? addSelection : undefined}
+              selectLabel={activeQ ? `Add as evidence for ${activeQ}` : 'Save as evidence'}
+              onCollapse={panels.toggleSource}
+            />
+          </div>
         </section>
         {assistant.drawerOpen && (
           <aside className="ws-drawer">
@@ -360,7 +389,7 @@ function Nav() {
   };
   return (
     <>
-      <div style={{ padding: '4px 8px 8px' }}>
+      <div className="ws-nav-head">
         <strong>{payload.study.label}</strong>
         <div className="small">{payload.resultName}</div>
         <div className="small muted">
@@ -426,10 +455,36 @@ function Nav() {
         {ev.problems.length > 0 && <span className="tiny faint">{ev.problems.length} open</span>}
       </button>
       <div className="tiny faint" style={{ padding: '12px 8px' }}>
-        Keys: <span className="kbd">↑</span>/<span className="kbd">↓</span> question · <span className="kbd">1</span>–<span className="kbd">6</span> answer · <span className="kbd">Enter</span> next unanswered
+        Keys: <span className="kbd">↑</span>/<span className="kbd">↓</span> question · <span className="kbd">1</span>–<span className="kbd">6</span> answer · <span className="kbd">Enter</span> next unanswered · <span className="kbd">[</span> <span className="kbd">]</span> fold side panels
         <br />* {judgementLabel('Low', 'overall')}
       </div>
     </>
   );
 }
 
+
+/** Compact navigation shown when the navigation column is folded: triage, D1–D6, overall and finish. */
+function DomainRail() {
+  const { a, ev, view, setView } = useAssess();
+  const item = (v: View, label: string, title: string, bar: string) => (
+    <button key={v} className={`rail-item ${view === v ? 'active' : ''}`} onClick={() => setView(v)} title={title} aria-label={title}>
+      {label}
+      <span className={`bar ${bar}`} />
+    </button>
+  );
+  return (
+    <>
+      <span className="rail-sep" />
+      {item('triage', 'B', 'Result & triage', ev.triageCritical ? 'Critical' : ev.triage.status === 'passed' ? 'Low' : '')}
+      {!ev.triageCritical &&
+        DOMAINS.map((d) => {
+          const st = ev.domains[d.id];
+          const bar = st.final && !st.decision.needsReconfirm && st.decision.origin !== 'legacy_import' ? st.final : st.evaluation.status === 'complete' ? 'pending' : '';
+          return item(d.id, d.id, `${d.id}. ${d.short}${st.final ? ` — ${st.final}` : st.evaluation.suggested ? ` — suggested ${st.evaluation.suggested}` : ''}`, bar);
+        })}
+      <span className="rail-sep" />
+      {item('overall', 'All', `Overall${a.overall.final ? ` — ${a.overall.final}` : ''}`, a.overall.final && !a.overall.needsReconfirm ? a.overall.final : '')}
+      {item('finish', '✓', ev.problems.length ? `Finish & submit — ${ev.problems.length} open` : 'Finish & submit', ev.problems.length ? 'pending' : a.status !== 'draft' ? 'Low' : '')}
+    </>
+  );
+}

@@ -149,7 +149,7 @@ function ResultCard({ r }: { r: ResultSpec }) {
         </Field>
         <Field label="Effect of interest">
           <select value={r.effect} onChange={(e) => updateResult(r.id, { effect: e.target.value as ResultSpec['effect'] })}>
-            <option value="ITT">Intention-to-treat (supported)</option>
+            <option value="ITT">Intention-to-treat</option>
             <option value="per-protocol">Per-protocol (not supported)</option>
           </select>
         </Field>

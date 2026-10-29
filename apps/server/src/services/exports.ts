@@ -361,7 +361,7 @@ export class ExportService {
   // --- Printable report -------------------------------------------------------------------------------------------
 
   /** A self-contained, printable HTML report of one assessment with source references and decision history. */
-  assessmentReport(id: string, viewer: string): string {
+  assessmentReport(id: string, viewer: string, theme: 'light' | 'dark' | null = null): string {
     const a = this.requireVisible(id, viewer);
     const b = this.bundle(a);
     const project = this.store.projects.require(a.projectId);
@@ -444,12 +444,16 @@ export class ExportService {
     const problems = ev.problems.length && a.status === 'draft' ? `<div class="warn">Draft — ${ev.problems.length} item(s) still open before submission.</div>` : '';
     const legacy = isLegacyRevision(b.revision) ? '<div class="warn">Study details imported from a legacy file and not yet reviewed.</div>' : '';
 
-    return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+    return `<!doctype html><html lang="en"${theme ? ` data-theme="${theme}"` : ''}><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ROBINS-I V2 · ${esc(b.study.label)} · ${esc(r ? resultName(r) : '')}</title>
 <style>
-  :root { --ink:#1b2430; --muted:#5d6b7c; --line:#d9dee5; --soft:#f4f6f9; --low:#1e7d4f; --mod:#a16207; --ser:#c2410c; --crit:#b91c1c; }
+  :root { --ink:#1b2430; --muted:#5d6b7c; --line:#d9dee5; --soft:#f4f6f9; --low:#1e7d4f; --mod:#a16207; --ser:#c2410c; --crit:#b91c1c; --paper:#fff; --warnbg:#fff4e5; --warnline:#f5c27a; color-scheme: light; }
+  :root[data-theme='dark'] { --ink:#e3e8ee; --muted:#a5b0bd; --line:#2f3a47; --soft:#1d2630; --low:#8bd694; --mod:#f2c66b; --ser:#ff9d93; --crit:#ff8a80; --paper:#11171e; --warnbg:#2b2311; --warnline:#5c4719; color-scheme: dark; }
+  @media screen and (prefers-color-scheme: dark) { :root:not([data-theme]) { --ink:#e3e8ee; --muted:#a5b0bd; --line:#2f3a47; --soft:#1d2630; --low:#8bd694; --mod:#f2c66b; --ser:#ff9d93; --crit:#ff8a80; --paper:#11171e; --warnbg:#2b2311; --warnline:#5c4719; color-scheme: dark; } }
+  /* Paper is always light. */
+  @media print { :root, :root[data-theme] { --ink:#1b2430; --muted:#5d6b7c; --line:#d9dee5; --soft:#f4f6f9; --low:#1e7d4f; --mod:#a16207; --ser:#c2410c; --crit:#b91c1c; --paper:#fff; --warnbg:#fff4e5; --warnline:#f5c27a; } }
   * { box-sizing: border-box; }
-  body { font: 13px/1.45 -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: var(--ink); background: #fff; margin: 0; padding: 24px 32px; max-width: 1100px; }
+  body { font: 13px/1.45 -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: var(--ink); background: var(--paper); margin: 0; padding: 24px 32px; max-width: 1100px; }
   h1 { font-size: 20px; margin: 0 0 4px; } h2 { font-size: 16px; margin: 24px 0 8px; border-bottom: 2px solid var(--ink); padding-bottom: 4px; }
   h3 { font-size: 14px; margin: 0 0 6px; }
   .sub { color: var(--muted); margin-bottom: 16px; }
@@ -469,9 +473,9 @@ export class ExportService {
   .interp { font-size: 12px; } .legacy, .note { font-size: 12px; color: var(--muted); font-style: italic; margin-top: 4px; }
   tr.excluded td { color: #8a95a3; }
   .verify { font-size: 12px; margin-top: 4px; padding: 3px 6px; border-left: 3px solid var(--line); background: var(--soft); } .verify.change_requested, .verify.disagree { border-color: var(--ser); } .verify.confirmed { border-color: var(--low); }
-  .warn { background: #fff4e5; border: 1px solid #f5c27a; padding: 6px 10px; border-radius: 4px; margin: 8px 0; }
-  .toolbar { position: sticky; top: 0; background: #fff; padding: 8px 0; margin-bottom: 8px; border-bottom: 1px solid var(--line); display: flex; gap: 8px; }
-  button { font: inherit; padding: 5px 12px; border: 1px solid var(--line); border-radius: 4px; background: var(--soft); cursor: pointer; }
+  .warn { background: var(--warnbg); border: 1px solid var(--warnline); padding: 6px 10px; border-radius: 4px; margin: 8px 0; }
+  .toolbar { position: sticky; top: 0; background: var(--paper); padding: 8px 0; margin-bottom: 8px; border-bottom: 1px solid var(--line); display: flex; gap: 8px; }
+  button { font: inherit; padding: 5px 12px; border: 1px solid var(--line); border-radius: 4px; background: var(--soft); color: var(--ink); cursor: pointer; }
   footer { margin-top: 28px; color: var(--muted); font-size: 11.5px; border-top: 1px solid var(--line); padding-top: 8px; }
   @media print { body { padding: 0; max-width: none; } .toolbar { display: none; } section.domain { border: none; padding: 0; } h2 { page-break-after: avoid; } tr { page-break-inside: avoid; } }
   @page { size: A4; margin: 14mm; }

@@ -10,6 +10,7 @@ import { PdfViewer, type FocusRequest } from '../../pdf/PdfViewer';
 import { SaveQueue, usePoll, useResource, deepMerge } from '../../hooks/data';
 import { useSession } from '../../session';
 import { StudyCtx, type LinkTarget, type StudyCtxValue, type StudyPayload } from './context';
+import { CollapseNavButton, NavRail, SourceRail, usePanels } from '../panels';
 import { SourcesSection } from './Sources';
 import { DetailsSection, InfoSourcesSection, TargetTrialSection } from './Details';
 import { ResultsSection } from './Results';
@@ -18,14 +19,14 @@ import { EvidenceBankSection } from './EvidenceBank';
 import { ApproveSection } from './Approve';
 
 const SECTIONS = [
-  { id: 'sources', label: 'Sources', group: 'Documents' },
-  { id: 'details', label: 'Study details', group: 'Study' },
-  { id: 'target', label: 'C. Target trial', group: 'Study' },
-  { id: 'info', label: 'D. Information sources', group: 'Study' },
-  { id: 'results', label: 'A. Results & B. triage', group: 'Results' },
-  { id: 'confounders', label: 'Confounding factors', group: 'Results' },
-  { id: 'evidence', label: 'Evidence bank', group: 'Evidence' },
-  { id: 'approve', label: 'Review & approve', group: 'Finish' }
+  { id: 'sources', label: 'Sources', short: 'PDF', group: 'Documents' },
+  { id: 'details', label: 'Study details', short: 'Std', group: 'Study' },
+  { id: 'target', label: 'C. Target trial', short: 'C', group: 'Study' },
+  { id: 'info', label: 'D. Information sources', short: 'D', group: 'Study' },
+  { id: 'results', label: 'A. Results & B. triage', short: 'A·B', group: 'Results' },
+  { id: 'confounders', label: 'Confounding factors', short: 'CF', group: 'Results' },
+  { id: 'evidence', label: 'Evidence bank', short: 'EB', group: 'Evidence' },
+  { id: 'approve', label: 'Review & approve', short: '✓', group: 'Finish' }
 ];
 
 export function StudyWorkspace() {
@@ -191,7 +192,20 @@ function StudyInner({ payload, setPayload, reload }: { payload: StudyPayload; se
     [updateData, updateResult]
   );
 
-  const focus = useCallback((f: Omit<FocusRequest, 'nonce'>) => setFocusReq({ ...f, nonce: Date.now() }), []);
+  const panels = usePanels();
+  const { showSource } = panels;
+  // Jumping to a page re-opens the source if it was folded away.
+  const focus = useCallback(
+    (f: Omit<FocusRequest, 'nonce'>) => {
+      showSource();
+      setFocusReq({ ...f, nonce: Date.now() });
+    },
+    [showSource]
+  );
+  // Choosing "Select in PDF" for a field needs the PDF visible.
+  useEffect(() => {
+    if (linkTarget) showSource();
+  }, [linkTarget, showSource]);
   const go = useCallback(
     (s: string, anchor?: string) => {
       setLinkTarget(null);
@@ -228,43 +242,65 @@ function StudyInner({ payload, setPayload, reload }: { payload: StudyPayload; se
   const groups = [...new Set(SECTIONS.map((s) => s.group))];
   const passed = payload.results.filter((r) => evaluateTriage(r.triage.answers as AnswerMap).status === 'passed').length;
 
+  const navRail = (
+    <NavRail onExpand={panels.toggleNav} onAssistant={assistant.drawerOpen ? undefined : () => assistant.setDrawerOpen(true)}>
+      <span className="rail-sep" />
+      {SECTIONS.map((s) => {
+        const st = sectionStatus(s.id, payload);
+        return (
+          <button key={s.id} className={`rail-item ${section === s.id ? 'active' : ''}`} onClick={() => go(s.id)} title={s.label} aria-label={s.label}>
+            {s.short}
+            <span className={`bar ${st === 'ok' ? 'Low' : st === 'warn' ? 'pending' : st === 'bad' ? 'Serious' : ''}`} />
+          </button>
+        );
+      })}
+    </NavRail>
+  );
+  const navFull = (
+    <>
+      <CollapseNavButton onClick={panels.toggleNav} />
+      <div className="ws-nav-head">
+        <strong>{study.label}</strong>
+        <div className="small muted">
+          Study session ·{' '}
+          <span style={{ color: study.status === 'approved' ? 'var(--ok)' : study.status === 'changed' ? 'var(--warn)' : undefined }}>
+            {study.status === 'approved' ? 'approved' : study.status === 'changed' ? 'changed since approval' : 'draft'}
+          </span>
+        </div>
+      </div>
+      {groups.map((g) => (
+        <div key={g}>
+          <div className="nav-section">{g}</div>
+          {SECTIONS.filter((s) => s.group === g).map((s) => (
+            <button key={s.id} className={`nav-item ${section === s.id ? 'active' : ''}`} onClick={() => go(s.id)}>
+              <span className={`dot ${sectionStatus(s.id, payload) || 'hollow'}`} />
+              <span className="grow">{s.label}</span>
+              {s.id === 'results' && <span className="tiny faint">{payload.results.length}</span>}
+              {s.id === 'evidence' && <span className="tiny faint">{evidence.length}</span>}
+            </button>
+          ))}
+        </div>
+      ))}
+      <div className="nav-section">Domain sessions</div>
+      <div className="small muted" style={{ padding: '0 8px' }}>
+        {passed} of {payload.results.length} results passed triage.{' '}
+        {study.approvedRevisionId ? <a onClick={() => go('approve')}>Start or continue →</a> : 'Approve the study to start.'}
+      </div>
+      {!assistant.drawerOpen && (
+        <button className="ai mt" style={{ margin: '16px 8px' }} onClick={() => assistant.setDrawerOpen(true)}>
+          ✦ Show assistant
+        </button>
+      )}
+      <div className="tiny faint" style={{ padding: '4px 8px' }}>
+        <span className="kbd">[</span> <span className="kbd">]</span> fold side panels
+      </div>
+    </>
+  );
+
   return (
     <StudyCtx.Provider value={ctx}>
-      <div className={`workspace ${assistant.drawerOpen ? 'drawer-open' : ''}`}>
-        <aside className="ws-nav">
-          <div style={{ padding: '4px 8px 8px' }}>
-            <strong>{study.label}</strong>
-            <div className="small muted">
-              Study session ·{' '}
-              <span style={{ color: study.status === 'approved' ? 'var(--ok)' : study.status === 'changed' ? 'var(--warn)' : undefined }}>
-                {study.status === 'approved' ? 'approved' : study.status === 'changed' ? 'changed since approval' : 'draft'}
-              </span>
-            </div>
-          </div>
-          {groups.map((g) => (
-            <div key={g}>
-              <div className="nav-section">{g}</div>
-              {SECTIONS.filter((s) => s.group === g).map((s) => (
-                <button key={s.id} className={`nav-item ${section === s.id ? 'active' : ''}`} onClick={() => go(s.id)}>
-                  <span className={`dot ${sectionStatus(s.id, payload) || 'hollow'}`} />
-                  <span className="grow">{s.label}</span>
-                  {s.id === 'results' && <span className="tiny faint">{payload.results.length}</span>}
-                  {s.id === 'evidence' && <span className="tiny faint">{evidence.length}</span>}
-                </button>
-              ))}
-            </div>
-          ))}
-          <div className="nav-section">Domain sessions</div>
-          <div className="small muted" style={{ padding: '0 8px' }}>
-            {passed} of {payload.results.length} results passed triage.{' '}
-            {study.approvedRevisionId ? <a onClick={() => go('approve')}>Start or continue →</a> : 'Approve the study to start.'}
-          </div>
-          {!assistant.drawerOpen && (
-            <button className="ai mt" style={{ margin: '16px 8px' }} onClick={() => assistant.setDrawerOpen(true)}>
-              ✦ Show assistant
-            </button>
-          )}
-        </aside>
+      <div className={`workspace ${assistant.drawerOpen ? 'drawer-open' : ''} ${panels.className}`}>
+        <aside className="ws-nav">{panels.navCollapsed ? navRail : navFull}</aside>
         <main className="ws-main">
           {linkTarget && (
             <div className="banner info" style={{ position: 'sticky', top: -16, zIndex: 5 }}>
@@ -286,7 +322,17 @@ function StudyInner({ payload, setPayload, reload }: { payload: StudyPayload; se
           {section === 'approve' && <ApproveSection />}
         </main>
         <section className="ws-source">
-          <PdfViewer docs={docs} focus={focusReq} highlights={highlights} onSelectText={addSelection} selectLabel={linkTarget ? `Add as evidence for ${linkTarget.label}` : 'Add to evidence bank'} />
+          {panels.sourceCollapsed && <SourceRail onExpand={panels.toggleSource} count={docs.length} />}
+          <div className="viewer">
+            <PdfViewer
+              docs={docs}
+              focus={focusReq}
+              highlights={highlights}
+              onSelectText={addSelection}
+              selectLabel={linkTarget ? `Add as evidence for ${linkTarget.label}` : 'Add to evidence bank'}
+              onCollapse={panels.toggleSource}
+            />
+          </div>
         </section>
         {assistant.drawerOpen && (
           <aside className="ws-drawer">

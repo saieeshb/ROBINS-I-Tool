@@ -68,9 +68,10 @@ export async function ioRoutes(app: FastifyInstance, s: Services): Promise<void>
   );
 
   // --- exports ---------------------------------------------------------------------------------------------------
-  app.get<{ Params: Params }>('/assessments/:id/report', async (req, reply) =>
-    reply.type('text/html; charset=utf-8').header('Cache-Control', 'no-store').send(s.exports.assessmentReport(req.params.id, viewerOf(req)))
-  );
+  app.get<{ Params: Params; Querystring: { theme?: string } }>('/assessments/:id/report', async (req, reply) => {
+    const theme = req.query.theme === 'dark' || req.query.theme === 'light' ? req.query.theme : null;
+    return reply.type('text/html; charset=utf-8').header('Cache-Control', 'no-store').send(s.exports.assessmentReport(req.params.id, viewerOf(req), theme));
+  });
   app.get<{ Params: Params }>('/assessments/:id/export.xlsx', async (req, reply) => {
     const { filename, bytes } = await s.exports.assessmentXlsx(req.params.id, viewerOf(req));
     return sendFile(reply, filename, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', bytes);

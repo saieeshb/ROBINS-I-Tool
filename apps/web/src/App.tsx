@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { BrowserRouter, Link, Route, Routes } from 'react-router-dom';
 import { SessionProvider, useSession } from './session';
+import { setThemePref, useTheme } from './theme';
 import { Icon } from './components/Icon';
 import { Modal, SaveStatus } from './components/ui';
 import { hasUnsavedChanges } from './hooks/data';
@@ -122,6 +123,16 @@ function Toasts() {
   );
 }
 
+function ThemeToggle() {
+  const { theme } = useTheme();
+  const next = theme === 'dark' ? 'light' : 'dark';
+  return (
+    <button className="topbar-icon ghost" onClick={() => setThemePref(next)} title={`Switch to ${next} mode`} aria-label={`Switch to ${next} mode`}>
+      <Icon name={theme === 'dark' ? 'sun' : 'moon'} size={18} />
+    </button>
+  );
+}
+
 function Shell({ children }: { children: ReactNode }) {
   const [crumbs, setCrumbs] = useState<Crumb[]>([]);
   useEffect(() => {
@@ -153,6 +164,7 @@ function Shell({ children }: { children: ReactNode }) {
         <SaveStatus />
         <AssistantChip />
         <ReviewerSelect />
+        <ThemeToggle />
         <Link to="/settings" className="topbar-icon" title="Settings" aria-label="Settings">
           <Icon name="settings" size={18} />
         </Link>

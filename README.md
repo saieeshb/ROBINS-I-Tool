@@ -65,11 +65,14 @@ Safeguards around the assistant:
 3. **Domain session** (one per result and reviewer).
    - Navigation, questions and guidance sit beside the PDF.
    - Answer with the keyboard (↑/↓, 1–6, Enter) and link quotations.
+   - Fold the navigation or the PDF to a slim rail (buttons, or `[` and `]`) when you need room; jumping to a quotation's page brings the PDF back.
    - The algorithm's suggested judgement is kept separate from yours, and overriding it needs a reason.
    - Answers that become unreachable are kept but excluded from scoring.
    - Submission checks completeness: every reached question answered, every quotation matched or manually checked, and every judgement confirmed.
 4. **Verify.** In independent mode, compare the two assessments side by side and resolve each disagreement in a consensus record; both originals are kept. In checking mode, the checker confirms each question or requests a change, the first reviewer responds, and the checker finalizes.
 5. **Outputs.** Excel workbook, JSON, and a printable report per assessment with source locations and the decision history.
+
+Light and dark themes follow your system setting; switch with the sun/moon button in the top bar or under Settings → Appearance.
 
 Reviewers on **one computer** share the project directly; choose who is working with the selector at the top right.
 Reviewer names are local attribution, not authenticated accounts.

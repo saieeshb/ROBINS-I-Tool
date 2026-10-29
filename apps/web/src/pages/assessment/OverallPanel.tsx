@@ -4,6 +4,7 @@ import { DOMAINS, getQuestion, judgementLabel, type Judgement } from '@robercop/
 import { download, errorMessage, post } from '../../api';
 import { JudgementBadge, ProblemList, TextArea, fmtTime } from '../../components/ui';
 import { useSession } from '../../session';
+import { useTheme } from '../../theme';
 import { useAssess, type View } from './context';
 import { CheckerControls, VerificationNotes } from './Review';
 
@@ -211,6 +212,7 @@ function targetToView(t: string): { view: string; q?: string } {
 export function FinishPanel() {
   const { ev, a, payload, setView, reload, settle, canEdit, isChecker } = useAssess();
   const { toast, reviewer } = useSession();
+  const { theme } = useTheme();
   const [reason, setReason] = useState('');
   const submit = async () => {
     try {
@@ -338,7 +340,7 @@ export function FinishPanel() {
       <div className="card">
         <h3>Outputs</h3>
         <div className="row wrap">
-          <a className="btn" href={`/api/assessments/${a.id}/report?reviewer=${encodeURIComponent(reviewer)}`} target="_blank" rel="noreferrer">
+          <a className="btn" href={`/api/assessments/${a.id}/report?reviewer=${encodeURIComponent(reviewer)}&theme=${theme}`} target="_blank" rel="noreferrer">
             Printable report ↗
           </a>
           <button onClick={() => void download(`/assessments/${a.id}/export.xlsx`, 'assessment.xlsx').catch((e) => toast(errorMessage(e), true))}>Excel</button>
