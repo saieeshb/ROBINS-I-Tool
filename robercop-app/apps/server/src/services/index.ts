@@ -92,6 +92,10 @@ export function createServices(config: AppConfig): Services {
     legacy,
     exports,
     settings,
-    close: () => db.close()
+    close: () => {
+      parsing.shutdown();
+      ai.shutdown();
+      db.close();
+    }
   };
 }

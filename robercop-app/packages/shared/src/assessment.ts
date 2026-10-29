@@ -126,7 +126,7 @@ export function evaluateAssessment(
           flag(q.id, `Quotation not verified against the source (${ev.check.status.replace(/_/g, ' ')}).`);
           problems.push({ target: q.id, message: `${q.id}: a linked quotation is ${ev.check.status.replace(/_/g, ' ')}; resolve it or record a manual check.` });
         }
-        if (r.decidedAt && ev.updatedAt > r.decidedAt) {
+        if (r.decidedAt && (ev.changedAt ?? ev.updatedAt) > r.decidedAt) {
           flag(q.id, 'Linked evidence changed after this answer was chosen; reconfirm the answer.');
           problems.push({ target: q.id, message: `${q.id}: linked evidence changed after the answer was chosen.` });
         }

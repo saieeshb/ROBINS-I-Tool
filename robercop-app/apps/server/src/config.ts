@@ -56,7 +56,9 @@ export function loadConfig(overrides: Partial<AppConfig> & { dataDir?: string } 
   const srcMcp = join(appRoot, 'apps', 'server', 'src', 'mcp', 'main.ts');
   // Runs execute in their own directory, so the tsx loader (development only) is referenced by absolute URL.
   const tsxLoader = join(appRoot, 'node_modules', 'tsx', 'dist', 'loader.mjs');
-  const mcpCommand = existsSync(builtMcp)
+  // The bundled MCP server is used when the server itself runs from the bundle (dist/); from source, the source.
+  const runningBundled = /[\\/]dist[\\/][^\\/]+\.mjs$/.test(fileURLToPath(import.meta.url));
+  const mcpCommand = runningBundled && existsSync(builtMcp)
     ? { command: process.execPath, args: ['--disable-warning=ExperimentalWarning', builtMcp] }
     : { command: process.execPath, args: ['--disable-warning=ExperimentalWarning', '--import', pathToFileURL(tsxLoader).href, srcMcp] };
 

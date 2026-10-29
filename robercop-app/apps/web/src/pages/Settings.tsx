@@ -136,6 +136,9 @@ export function SettingsPage() {
           Data directory: <code>{settings.dataDir}</code>
         </p>
         <p className="small muted">Original PDFs, parsed artifacts, assistant run records and the database stay in this folder. Back it up like any other documents folder.</p>
+        <p className="small muted">
+          To use a different folder (for example a synced or backed-up drive), start ROBer COP with <code>--data-dir "path/to/folder"</code>; the launcher remembers it. Only one copy of ROBer COP should use a folder at a time.
+        </p>
         <p className="small faint">Installation ID: {settings.installationId}</p>
       </div>
     </div>

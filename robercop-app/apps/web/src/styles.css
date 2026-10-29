@@ -378,3 +378,5 @@ table.t select, table.t input { font-size: 13px; padding: 3px 6px; }
   .topbar, .no-print { display: none !important; }
   body { background: #fff; }
 }
+
+.grid > .card + .card { margin-top: 0; }

@@ -65,6 +65,7 @@ export class ClaudeCodeRunner implements AiRunner {
   private live = new Map<string, Live>();
   private queue: string[] = [];
   private active = 0;
+  private closed = false;
   lastUsage: Record<string, unknown> | null = null;
 
   constructor(
@@ -179,8 +180,15 @@ export class ClaudeCodeRunner implements AiRunner {
     return run;
   }
 
+  /** Stops running children without recording anything; recover() marks their runs interrupted on the next start. */
+  shutdown(): void {
+    this.closed = true;
+    this.queue = [];
+    for (const live of this.live.values()) if (live.child?.pid) killTree(live.child);
+  }
+
   private pump(): void {
-    while (this.active < MAX_CONCURRENT && this.queue.length) {
+    while (!this.closed && this.active < MAX_CONCURRENT && this.queue.length) {
       const id = this.queue.shift()!;
       this.active++;
       void this.execute(id).finally(() => {
@@ -219,11 +227,12 @@ export class ClaudeCodeRunner implements AiRunner {
 
   private async execute(runId: string): Promise<void> {
     const live = this.live.get(runId)!;
-    if (live.cancelled) return;
+    if (live.cancelled || this.closed) return;
     const run = this.store.aiRuns.require(runId);
     const dir = join(this.config.runsDir, runId);
     const settings = this.settings();
     const status = await this.cli.status();
+    if (this.closed) return;
     if (!status.installed) return this.fail(runId, 'failed', status.problems[0] ?? 'Claude Code is not installed.');
     if (status.loggedIn === false) return this.fail(runId, 'auth_required', 'Claude Code is not signed in. Run "claude" in a terminal and sign in, then retry.');
     if ((status.usesApiKey || (status.apiProvider && status.apiProvider !== 'firstParty')) && !settings.allowApiBilling) {
@@ -375,6 +384,7 @@ export class ClaudeCodeRunner implements AiRunner {
       });
       child.on('close', resolve);
     });
+    if (this.closed) return;
     if (buffer.trim()) handle(buffer.trim());
     writeFileSync(join(dir, 'stderr.log'), stderr);
     this.ingestSearches(run, searchLog);

@@ -380,7 +380,7 @@ function Nav() {
             return (
               <div key={d.id}>
                 <button className={`nav-item ${view === d.id ? 'active' : ''}`} onClick={() => setView(d.id)}>
-                  <span className={`dot ${st.check.ok && !st.decision.needsReconfirm ? 'ok' : st.evaluation.status === 'complete' ? 'warn' : 'hollow'}`} />
+                  <span className={`dot ${st.check.ok && !st.decision.needsReconfirm && st.decision.origin !== 'legacy_import' ? 'ok' : st.evaluation.status === 'complete' ? 'warn' : 'hollow'}`} />
                   <span className="grow">
                     {d.id}. {d.short}
                   </span>

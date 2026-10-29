@@ -6,11 +6,14 @@ import { useCrumbs } from '../App';
 import { Empty, Field, Modal, fmtTime } from '../components/ui';
 import { useResource } from '../hooks/data';
 import { useSession } from '../session';
+import { PackageImport } from './ImportExport';
 
 export function ProjectsPage() {
   useCrumbs([]);
   const { data, error } = useResource<Project[]>('/projects');
   const [creating, setCreating] = useState(false);
+  const [receiving, setReceiving] = useState(false);
+  const nav = useNavigate();
   return (
     <div className="page">
       <div className="page-head">
@@ -18,6 +21,7 @@ export function ProjectsPage() {
           <h1>Projects</h1>
           <div className="sub">Each project is one systematic review: its studies, results, confounder matrix and verification mode.</div>
         </div>
+        <button onClick={() => setReceiving(true)}>Open a review package…</button>
         <button className="primary" onClick={() => setCreating(true)}>
           + New project
         </button>
@@ -51,6 +55,12 @@ export function ProjectsPage() {
         ))}
       </div>
       {creating && <NewProject onClose={() => setCreating(false)} />}
+      {receiving && (
+        <Modal title="Open a review package" onClose={() => setReceiving(false)} wide>
+          <p className="small muted">Choose the .robercop.zip file another reviewer sent you. The project and study are created on this computer if they are new here.</p>
+          <PackageImport onImported={(rec) => nav(`/projects/${rec.projectId}`)} />
+        </Modal>
+      )}
     </div>
   );
 }

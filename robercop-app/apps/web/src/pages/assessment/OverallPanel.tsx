@@ -325,7 +325,7 @@ export function FinishPanel() {
       <div className="card">
         <h3>Outputs</h3>
         <div className="row wrap">
-          <a className="btn" href={`/api/assessments/${a.id}/report`} target="_blank" rel="noreferrer">
+          <a className="btn" href={`/api/assessments/${a.id}/report?reviewer=${encodeURIComponent(reviewer)}`} target="_blank" rel="noreferrer">
             Printable report ↗
           </a>
           <button onClick={() => void download(`/assessments/${a.id}/export.xlsx`, 'assessment.xlsx').catch((e) => toast(errorMessage(e), true))}>Excel</button>

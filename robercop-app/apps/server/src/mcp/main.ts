@@ -58,9 +58,12 @@ function docLabel(id: string): string {
 
 const server = new McpServer({ name: 'robercop', version: '0.1.0' });
 
+/** Every tool only reads the study's parsed sources; none can change anything. */
+const READ_ONLY = { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false } as const;
+
 server.registerTool(
   'list_sources',
-  { title: 'List sources', description: 'List the source documents available for this study, with page counts and extraction warnings.', inputSchema: {} },
+  { title: 'List sources', description: 'List the source documents available for this study, with page counts and extraction warnings.', inputSchema: {}, annotations: READ_ONLY },
   async () => {
     if (jobIds.length === 0) return text('No parsed sources are available.');
     const rows = db
@@ -80,7 +83,8 @@ server.registerTool(
   {
     title: 'Search sources',
     description: 'Full-text search of the parsed study documents. Use "quoted phrases" for exact phrases. Returns matching passages with document id, page and section.',
-    inputSchema: { query: z.string().min(1), documentId: z.string().optional(), limit: z.number().int().min(1).max(30).optional() }
+    inputSchema: { query: z.string().min(1), documentId: z.string().optional(), limit: z.number().int().min(1).max(30).optional() },
+    annotations: READ_ONLY
   },
   async ({ query, documentId, limit }) => {
     const match = toFtsQuery(query);
@@ -110,7 +114,8 @@ server.registerTool(
   {
     title: 'Read a page',
     description: 'Return the full parsed text of one page of a source document, block by block.',
-    inputSchema: { documentId: z.string(), page: z.number().int().min(1) }
+    inputSchema: { documentId: z.string(), page: z.number().int().min(1) },
+    annotations: READ_ONLY
   },
   async ({ documentId, page }) => {
     const d = docs.find((x) => x.documentId === documentId);
@@ -123,7 +128,7 @@ server.registerTool(
 
 server.registerTool(
   'get_blocks',
-  { title: 'Read blocks', description: 'Return the text of specific blocks (from search results), with neighbouring context.', inputSchema: { blockIds: z.array(z.string()).min(1).max(20), context: z.number().int().min(0).max(3).optional() } },
+  { title: 'Read blocks', description: 'Return the text of specific blocks (from search results), with neighbouring context.', inputSchema: { blockIds: z.array(z.string()).min(1).max(20), context: z.number().int().min(0).max(3).optional() }, annotations: READ_ONLY },
   async ({ blockIds, context }) => {
     const out: string[] = [];
     for (const id of blockIds) {
@@ -143,7 +148,8 @@ server.registerTool(
   {
     title: 'Check a quotation',
     description: 'Check whether a quotation appears verbatim in the parsed sources (exact or after whitespace/hyphenation normalization). Use before returning quotations.',
-    inputSchema: { quote: z.string().min(1), page: z.number().int().optional() }
+    inputSchema: { quote: z.string().min(1), page: z.number().int().optional() },
+    annotations: READ_ONLY
   },
   async ({ quote, page }) => {
     matchable ??= docs.map((d) => ({

@@ -384,6 +384,12 @@ export function checkQuote(quoteInput: string, docs: DocumentText[], opts: Check
 }
 
 /** A check is stale when the sources it was run against have since been re-parsed. */
+/** The part of a check that matters to an answer: its status and where the quotation was found. */
+export function checkOutcome(check: SourceCheck): string {
+  const where = check.locations.map((l) => `${l.documentId}:${l.page}`).sort().join(',');
+  return `${check.status}|${where}|${check.manual ? `${check.manual.by}@${check.manual.at}` : ''}`;
+}
+
 export function isCheckStale(check: SourceCheck, currentJobIds: string[]): boolean {
   if (check.status === 'not_checked' || check.status === 'manually_verified') return false;
   const a = [...check.parseJobIds].sort().join(',');

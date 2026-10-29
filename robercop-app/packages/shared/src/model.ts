@@ -249,6 +249,11 @@ export interface EvidenceItem {
   check: SourceCheck;
   acceptedBy: string | null;
   acceptedAt: string | null;
+  /**
+   * When the quotation, its source location or its check outcome last changed. Answers decided before this must be
+   * reconfirmed. Edits to tags, theme or interpretation do not move it. Falls back to updatedAt when absent.
+   */
+  changedAt?: string;
   createdAt: string;
   updatedAt: string;
   version: number;

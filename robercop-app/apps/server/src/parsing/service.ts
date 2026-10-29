@@ -26,6 +26,7 @@ const SYSTEM = { actor: 'system', reason: 'parse' };
  */
 export class ParseService {
   private running = false;
+  private closed = false;
   private current: { jobId: string; cancel: () => void } | null = null;
   private doclingCache: DoclingStatus | null = null;
   /** Called after a document gets a new current parse, so dependent quotation checks can be re-run. */
@@ -124,8 +125,14 @@ export class ParseService {
     }
   }
 
+  /** Stops taking jobs and abandons the current one; it stays "running" and is requeued by recover() next start. */
+  shutdown(): void {
+    this.closed = true;
+    this.current?.cancel();
+  }
+
   kick(): void {
-    if (this.running) return;
+    if (this.running || this.closed) return;
     this.running = true;
     setImmediate(() => void this.loop());
   }
@@ -142,6 +149,7 @@ export class ParseService {
   private async loop(): Promise<void> {
     try {
       for (;;) {
+        if (this.closed) break;
         const job = this.store.parseJobs.find({ status: 'queued' }, 'created_at')[0];
         if (!job) break;
         await this.runJob(job);
@@ -168,6 +176,7 @@ export class ParseService {
     try {
       const progress = (f: number) => {
         // Progress writes are best-effort; avoid flooding revisions.
+        if (this.closed) return;
         this.store.db.run("UPDATE parse_jobs SET data = json_set(data, '$.progress', ?) WHERE id = ?", Math.round(f * 100) / 100, job.id);
       };
       let output: ParseOutput;
@@ -181,7 +190,7 @@ export class ParseService {
         writeFileSync(join(outDir, 'document.md'), output.markdown);
         writeFileSync(join(outDir, 'blocks.json'), JSON.stringify(output.blocks));
       }
-      if (cancelled || this.store.parseJobs.require(job.id).status === 'cancelled') return;
+      if (this.closed || cancelled || this.store.parseJobs.require(job.id).status === 'cancelled') return;
       const blocks: SourceBlock[] = output.blocks.map((b: ParsedBlock, seq) => ({ id: newId(), documentId: doc.id, jobId: job.id, seq, ...b }));
       this.store.db.tx(() => {
         this.store.insertBlocks(blocks);
@@ -201,6 +210,7 @@ export class ParseService {
       });
       this.onParsed(doc.id, job.id);
     } catch (err) {
+      if (this.closed) return;
       const message = (err as Error).message;
       this.store.parseJobs.mutate(
         job.id,

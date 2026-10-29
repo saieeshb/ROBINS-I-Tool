@@ -1,4 +1,4 @@
-import { checkQuote, emptyCheck, isCheckStale, type EvidenceItem, type SearchRecord, type SourceCheck } from '@robercop/shared';
+import { checkOutcome, checkQuote, emptyCheck, isCheckStale, type EvidenceItem, type SearchRecord, type SourceCheck } from '@robercop/shared';
 import { getQuestion } from '@robercop/rules';
 import { ValidationError, newId, now } from '../db/database.js';
 import type { Store } from '../db/store.js';
@@ -72,6 +72,7 @@ export class EvidenceService {
       check,
       acceptedBy: actor,
       acceptedAt: now(),
+      changedAt: now(),
       createdAt: '',
       updatedAt: '',
       version: 0
@@ -96,6 +97,7 @@ export class EvidenceService {
     if (quoteChanged) {
       // Any earlier result, including a manual check, no longer applies to the edited quotation.
       next.check = this.check(this.documents.bundle(current.studyId, { includeReferences: true }), next);
+      next.changedAt = now();
     }
     return this.store.evidence.update(next, { actor, reason: quoteChanged ? 'quotation edited; rechecked' : 'edited' });
   }
@@ -103,7 +105,7 @@ export class EvidenceService {
   recheck(id: string, actor: string): EvidenceItem {
     const item = this.store.evidence.require(id);
     const bundle = this.documents.bundle(item.studyId, { includeReferences: true });
-    return this.store.evidence.mutate(id, (e) => void (e.check = this.check(bundle, e)), { actor, reason: 'rechecked' });
+    return this.store.evidence.mutate(id, (e) => this.applyCheck(e, this.check(bundle, e)), { actor, reason: 'rechecked' });
   }
 
   /**
@@ -116,10 +118,16 @@ export class EvidenceService {
     for (const e of this.store.evidence.find({ study_id: studyId })) {
       if (e.kind !== 'quote' || e.check.status === 'manually_verified') continue;
       if (!isCheckStale(e.check, bundle.jobIds) && e.check.status !== 'not_checked') continue;
-      this.store.evidence.mutate(e.id, (x) => void (x.check = this.check(bundle, x)), { actor: 'system', reason: 'rechecked after re-parse' });
+      this.store.evidence.mutate(e.id, (x) => this.applyCheck(x, this.check(bundle, x)), { actor: 'system', reason: 'rechecked after re-parse' });
       n++;
     }
     return n;
+  }
+
+  /** Stores a new check; answers relying on the item are flagged only if the outcome (status or location) changed. */
+  private applyCheck(e: EvidenceItem, check: SourceCheck): void {
+    if (checkOutcome(check) !== checkOutcome(e.check)) e.changedAt = now();
+    e.check = check;
   }
 
   /** Records a documented manual check of a quotation against the original PDF. */
@@ -140,6 +148,7 @@ export class EvidenceService {
         };
         if (chosen) e.documentId = chosen.documentId;
         e.page = page ?? null;
+        e.changedAt = now();
       },
       { actor, reason: 'manual source check' }
     );

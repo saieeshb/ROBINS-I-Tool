@@ -125,6 +125,32 @@ describe('study and domain sessions', () => {
     expect(res.body.error).toMatch(/per-protocol/);
   });
 
+  it('flags an answer only when its linked quotation materially changes, not on every re-parse', async () => {
+    const { result, study } = await approvedStudy(env, 'independent');
+    const a = (await env.api('POST', `/api/results/${result.id}/assessments`, {})).body;
+    const ev = (await env.api('POST', `/api/studies/${study.id}/evidence`, { quote: 'Smoking history and surgeon experience were not available in the database', assessmentId: a.id })).body;
+    let cur = (await env.api('PATCH', `/api/assessments/${a.id}`, { version: a.version, responses: { 'Q1.1': { answer: 'SN', evidenceIds: [ev.id] } } })).body;
+    const { evaluateAssessment } = await import('@robercop/shared');
+    const flagsFor = async () => {
+      const p = (await env.api('GET', `/api/assessments/${a.id}`)).body;
+      return evaluateAssessment(p.assessment, p.revision.snapshot, new Map(p.evidence.map((e: any) => [e.id, e]))).flags['Q1.1'] ?? [];
+    };
+    expect(await flagsFor()).toEqual([]);
+    // Re-parsing the PDF rechecks the quotation; it is found at the same place, so the answer stands.
+    const doc = env.services.documents.forStudy(study.id)[0];
+    expect((await env.api('POST', `/api/documents/${doc.id}/reparse`, { parser: 'pdfjs' })).status).toBe(200);
+    await env.services.parsing.idle();
+    const rechecked = env.services.store.evidence.require(ev.id);
+    expect(rechecked.check.parseJobIds).not.toEqual(ev.check.parseJobIds);
+    expect(await flagsFor()).toEqual([]);
+    // Editing the quotation is a material change.
+    await new Promise((r) => setTimeout(r, 5));
+    const edited = await env.api('PATCH', `/api/evidence/${ev.id}`, { version: rechecked.version, quote: 'Smoking history and surgeon experience were not available' });
+    expect(edited.status, JSON.stringify(edited.body)).toBe(200);
+    expect((await flagsFor()).join(' ')).toMatch(/changed after this answer/);
+    void cur;
+  });
+
   it('keeps revision history with coalesced autosaves and milestones', async () => {
     const { result } = await approvedStudy(env, 'independent');
     const a = (await env.api('POST', `/api/results/${result.id}/assessments`, {})).body;
